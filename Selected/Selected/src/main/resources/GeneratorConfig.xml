@@ -1,0 +1,49 @@
+<!DOCTYPE generatorConfiguration PUBLIC
+        "-//mybatis.org//DTD MyBatis Generator Configuration 1.0//EN"
+        "http://mybatis.org/dtd/mybatis-generator-config_1_0.dtd">
+<generatorConfiguration>
+    <!-- MyBatis3Simple风格 -->
+    <properties resource="application.properties" />
+    <context id="simple" targetRuntime="MyBatis3Simple">
+
+        <property name="javaFileEncoding" value="UTF-8"/>
+        <plugin type="org.mybatis.generator.plugins.UnmergeableXmlMappersPlugin"/>
+
+        <commentGenerator>
+            <property name="suppressAllComments" value="true"/>
+        </commentGenerator>
+
+        <!-- connection -->
+        <jdbcConnection driverClass="${jdbc.driverClassName}"
+                        connectionURL="${jdbc.url}"
+                        userId="${jdbc.username}" password="${jdbc.password}">
+            <property name="nullCatalogMeansCurrent" value="true"/>
+        </jdbcConnection>
+
+        <javaModelGenerator targetPackage="com.arch.selected.entity" targetProject="src/main/java"/>
+
+        <sqlMapGenerator targetPackage="mapper" targetProject="src/main/resources"/>
+
+        <javaClientGenerator type="XMLMAPPER" targetPackage="com.arch.selected.dao" targetProject="src/main/java"/>
+
+
+        <table tableName="admin" domainObjectName="Admin" >
+            <generatedKey column="id" sqlStatement="MYSQL" identity="true"/>
+        </table>
+        <table tableName="employee" domainObjectName="Employee" >
+            <generatedKey column="id" sqlStatement="MYSQL" identity="true"/>
+        </table>
+        <table tableName="item" domainObjectName="Item" >
+            <generatedKey column="id" sqlStatement="MYSQL" identity="true"/>
+        </table>
+        <table tableName="storkRecord" domainObjectName="StorkRecord" >
+            <generatedKey column="id" sqlStatement="MYSQL" identity="true"/>
+            <columnOverride column="role" javaType="Integer" jdbcType="TINYINT"/>
+        </table>
+        <table tableName="vendor" domainObjectName="Vendor" >
+            <generatedKey column="id" sqlStatement="MYSQL" identity="true"/>
+            <columnOverride column="optType" javaType="Integer" jdbcType="TINYINT"/>
+        </table>
+
+    </context>
+</generatorConfiguration>
