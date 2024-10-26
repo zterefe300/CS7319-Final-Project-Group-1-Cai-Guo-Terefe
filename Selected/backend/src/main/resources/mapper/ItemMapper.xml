@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.selected.inventory_dashboard.persistence.dao.ItemMapper">
+  <resultMap id="BaseResultMap" type="com.selected.inventory_dashboard.persistence.entity.Item">
+    <id column="id" jdbcType="INTEGER" property="id" />
+    <result column="name" jdbcType="VARCHAR" property="name" />
+    <result column="detail" jdbcType="VARCHAR" property="detail" />
+    <result column="pics" jdbcType="VARCHAR" property="pics" />
+    <result column="qty" jdbcType="INTEGER" property="qty" />
+    <result column="qtySold" jdbcType="INTEGER" property="qtysold" />
+    <result column="threshold" jdbcType="INTEGER" property="threshold" />
+    <result column="vendorId" jdbcType="INTEGER" property="vendorid" />
+    <result column="sort" jdbcType="INTEGER" property="sort" />
+    <result column="create_time" jdbcType="TIMESTAMP" property="createTime" />
+    <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
+  </resultMap>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
+    delete from item
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.selected.inventory_dashboard.persistence.entity.Item">
+    <selectKey keyProperty="id" order="AFTER" resultType="java.lang.Integer">
+      SELECT LAST_INSERT_ID()
+    </selectKey>
+    insert into item (name, detail, pics, 
+      qty, qtySold, threshold, 
+      vendorId, sort, create_time, 
+      update_time)
+    values (#{name,jdbcType=VARCHAR}, #{detail,jdbcType=VARCHAR}, #{pics,jdbcType=VARCHAR}, 
+      #{qty,jdbcType=INTEGER}, #{qtysold,jdbcType=INTEGER}, #{threshold,jdbcType=INTEGER}, 
+      #{vendorid,jdbcType=INTEGER}, #{sort,jdbcType=INTEGER}, #{createTime,jdbcType=TIMESTAMP}, 
+      #{updateTime,jdbcType=TIMESTAMP})
+  </insert>
+  <update id="updateByPrimaryKey" parameterType="com.selected.inventory_dashboard.persistence.entity.Item">
+    update item
+    set name = #{name,jdbcType=VARCHAR},
+      detail = #{detail,jdbcType=VARCHAR},
+      pics = #{pics,jdbcType=VARCHAR},
+      qty = #{qty,jdbcType=INTEGER},
+      qtySold = #{qtysold,jdbcType=INTEGER},
+      threshold = #{threshold,jdbcType=INTEGER},
+      vendorId = #{vendorid,jdbcType=INTEGER},
+      sort = #{sort,jdbcType=INTEGER},
+      create_time = #{createTime,jdbcType=TIMESTAMP},
+      update_time = #{updateTime,jdbcType=TIMESTAMP}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+    select id, name, detail, pics, qty, qtySold, threshold, vendorId, sort, create_time, 
+    update_time
+    from item
+    where id = #{id,jdbcType=INTEGER}
+  </select>
+  <select id="selectAll" resultMap="BaseResultMap">
+    select id, name, detail, pics, qty, qtySold, threshold, vendorId, sort, create_time, 
+    update_time
+    from item
+  </select>
+</mapper>
