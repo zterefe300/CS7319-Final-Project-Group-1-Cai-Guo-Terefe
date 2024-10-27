@@ -1,7 +1,6 @@
-package com.selected.inventory_dashboard.persistence.dao;
+package com.arch.selected.dao;
 
-import com.selected.inventory_dashboard.persistence.entity.Admin;
-
+import com.arch.selected.entity.Admin;
 import java.util.List;
 
 public interface AdminMapper {

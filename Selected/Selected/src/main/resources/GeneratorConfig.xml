@@ -20,27 +20,29 @@
             <property name="nullCatalogMeansCurrent" value="true"/>
         </jdbcConnection>
 
-        <javaModelGenerator targetPackage="com.selected.inventory_dashboard.persistence.entity" targetProject="src/main/java"/>
+        <javaModelGenerator targetPackage="com.arch.selected.entity" targetProject="src/main/java"/>
 
         <sqlMapGenerator targetPackage="mapper" targetProject="src/main/resources"/>
 
-        <javaClientGenerator type="XMLMAPPER" targetPackage="com.selected.inventory_dashboard.persistence.dao" targetProject="src/main/java"/>
+        <javaClientGenerator type="XMLMAPPER" targetPackage="com.arch.selected.dao" targetProject="src/main/java"/>
 
 
-
-        <table tableName="user" domainObjectName="User" >
+        <table tableName="admin" domainObjectName="Admin" >
             <generatedKey column="id" sqlStatement="MYSQL" identity="true"/>
-            <columnOverride column="role_type" javaType="Integer" jdbcType="TINYINT"/>
+        </table>
+        <table tableName="employee" domainObjectName="Employee" >
+            <generatedKey column="id" sqlStatement="MYSQL" identity="true"/>
         </table>
         <table tableName="item" domainObjectName="Item" >
             <generatedKey column="id" sqlStatement="MYSQL" identity="true"/>
         </table>
-        <table tableName="stock_record" domainObjectName="StockRecord" >
+        <table tableName="storkRecord" domainObjectName="StorkRecord" >
             <generatedKey column="id" sqlStatement="MYSQL" identity="true"/>
-            <columnOverride column="opt_type" javaType="Integer" jdbcType="TINYINT"/>
+            <columnOverride column="role" javaType="Integer" jdbcType="TINYINT"/>
         </table>
         <table tableName="vendor" domainObjectName="Vendor" >
             <generatedKey column="id" sqlStatement="MYSQL" identity="true"/>
+            <columnOverride column="optType" javaType="Integer" jdbcType="TINYINT"/>
         </table>
 
     </context>

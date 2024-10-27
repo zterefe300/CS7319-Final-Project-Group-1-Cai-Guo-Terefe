@@ -1,4 +1,4 @@
-package com.selected.inventory_dashboard.persistence.entity;
+package com.arch.selected.entity;
 
 import java.util.Date;
 
@@ -13,11 +13,11 @@ public class Item {
 
     private Integer qty;
 
-    private Integer qtySold;
+    private Integer qtysold;
 
     private Integer threshold;
 
-    private Integer vendorId;
+    private Integer vendorid;
 
     private Integer sort;
 
@@ -65,12 +65,12 @@ public class Item {
         this.qty = qty;
     }
 
-    public Integer getQtySold() {
-        return qtySold;
+    public Integer getQtysold() {
+        return qtysold;
     }
 
-    public void setQtySold(Integer qtySold) {
-        this.qtySold = qtySold;
+    public void setQtysold(Integer qtysold) {
+        this.qtysold = qtysold;
     }
 
     public Integer getThreshold() {
@@ -81,12 +81,12 @@ public class Item {
         this.threshold = threshold;
     }
 
-    public Integer getVendorId() {
-        return vendorId;
+    public Integer getVendorid() {
+        return vendorid;
     }
 
-    public void setVendorId(Integer vendorId) {
-        this.vendorId = vendorId;
+    public void setVendorid(Integer vendorid) {
+        this.vendorid = vendorid;
     }
 
     public Integer getSort() {

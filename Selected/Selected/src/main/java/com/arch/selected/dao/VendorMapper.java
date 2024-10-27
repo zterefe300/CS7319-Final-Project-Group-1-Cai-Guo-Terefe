@@ -1,6 +1,6 @@
-package com.selected.inventory_dashboard.persistence.dao;
+package com.arch.selected.dao;
 
-import com.selected.inventory_dashboard.persistence.entity.Vendor;
+import com.arch.selected.entity.Vendor;
 import java.util.List;
 
 public interface VendorMapper {

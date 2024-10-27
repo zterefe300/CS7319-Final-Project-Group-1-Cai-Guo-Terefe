@@ -1,7 +1,6 @@
-package com.selected.inventory_dashboard.persistence.dao;
+package com.arch.selected.dao;
 
-import com.selected.inventory_dashboard.persistence.entity.Employee;
-
+import com.arch.selected.entity.Employee;
 import java.util.List;
 
 public interface EmployeeMapper {

@@ -1,7 +1,6 @@
-package com.selected.inventory_dashboard.persistence.dao;
+package com.arch.selected.dao;
 
-import com.selected.inventory_dashboard.persistence.entity.StorkRecord;
-
+import com.arch.selected.entity.StorkRecord;
 import java.util.List;
 
 public interface StorkRecordMapper {

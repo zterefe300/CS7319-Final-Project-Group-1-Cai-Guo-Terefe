@@ -1,4 +1,4 @@
-package com.selected.inventory_dashboard.persistence.entity;
+package com.arch.selected.entity;
 
 import java.util.Date;
 

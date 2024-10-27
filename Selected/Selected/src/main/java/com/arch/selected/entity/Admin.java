@@ -1,15 +1,13 @@
-package com.selected.inventory_dashboard.persistence.entity;
+package com.arch.selected.entity;
 
 import java.util.Date;
 
-public class Vendor {
+public class Admin {
     private Integer id;
 
-    private String name;
+    private String username;
 
-    private String email;
-
-    private String phone;
+    private String password;
 
     private Date createTime;
 
@@ -23,28 +21,20 @@ public class Vendor {
         this.id = id;
     }
 
-    public String getName() {
-        return name;
+    public String getUsername() {
+        return username;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setUsername(String username) {
+        this.username = username;
     }
 
-    public String getEmail() {
-        return email;
+    public String getPassword() {
+        return password;
     }
 
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public String getPhone() {
-        return phone;
-    }
-
-    public void setPhone(String phone) {
-        this.phone = phone;
+    public void setPassword(String password) {
+        this.password = password;
     }
 
     public Date getCreateTime() {
