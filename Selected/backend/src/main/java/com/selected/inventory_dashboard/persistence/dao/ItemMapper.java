@@ -1,7 +1,6 @@
 package com.selected.inventory_dashboard.persistence.dao;
 
 import com.selected.inventory_dashboard.persistence.entity.Item;
-
 import java.util.List;
 
 public interface ItemMapper {
