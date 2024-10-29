@@ -27,7 +27,6 @@ const LoginSignInPage = () => {
   }
 
   const handleLoginClick = () => {
-    console.log("Clicked on Login")
     console.log(inputValues)
   }
 
@@ -56,6 +55,7 @@ const LoginSignInPage = () => {
                 variant="outlined"
                 required
                 value={inputValues.email}
+                type="email"
               />
             </Grid2>
             <Grid2 size={12}>
@@ -68,6 +68,7 @@ const LoginSignInPage = () => {
                 variant="outlined"
                 required
                 value={inputValues.password}
+                type="password"
               />
             </Grid2>
             <Button 
