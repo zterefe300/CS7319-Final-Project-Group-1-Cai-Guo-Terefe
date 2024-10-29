@@ -27,22 +27,20 @@
         <javaClientGenerator type="XMLMAPPER" targetPackage="com.selected.inventory_dashboard.persistence.dao" targetProject="src/main/java"/>
 
 
-        <table tableName="admin" domainObjectName="Admin" >
+
+        <table tableName="user" domainObjectName="User" >
             <generatedKey column="id" sqlStatement="MYSQL" identity="true"/>
-        </table>
-        <table tableName="employee" domainObjectName="Employee" >
-            <generatedKey column="id" sqlStatement="MYSQL" identity="true"/>
+            <columnOverride column="role_type" javaType="Integer" jdbcType="TINYINT"/>
         </table>
         <table tableName="item" domainObjectName="Item" >
             <generatedKey column="id" sqlStatement="MYSQL" identity="true"/>
         </table>
-        <table tableName="storkRecord" domainObjectName="StorkRecord" >
+        <table tableName="stock_record" domainObjectName="StockRecord" >
             <generatedKey column="id" sqlStatement="MYSQL" identity="true"/>
-            <columnOverride column="role" javaType="Integer" jdbcType="TINYINT"/>
+            <columnOverride column="opt_type" javaType="Integer" jdbcType="TINYINT"/>
         </table>
         <table tableName="vendor" domainObjectName="Vendor" >
             <generatedKey column="id" sqlStatement="MYSQL" identity="true"/>
-            <columnOverride column="optType" javaType="Integer" jdbcType="TINYINT"/>
         </table>
 
     </context>
