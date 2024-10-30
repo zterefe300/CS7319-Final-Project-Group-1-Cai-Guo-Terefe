@@ -2,7 +2,7 @@ import { RouterProvider } from "react-router-dom"
 
 import routes from "./routes/routes"
 
-import './App.scss'
+import './App.css'
 
 function App() {
   return (
