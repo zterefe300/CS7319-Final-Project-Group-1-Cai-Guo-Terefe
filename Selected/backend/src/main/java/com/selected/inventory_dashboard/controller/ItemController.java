@@ -20,9 +20,6 @@ public class ItemController {
 
     @GetMapping("/hello")
     public Item findById(){
-        return itemService.findById(1);
+       return null;
     }
-
-
-
 }
