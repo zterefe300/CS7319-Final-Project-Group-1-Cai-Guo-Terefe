@@ -25,7 +25,28 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
-    public ResponseWrapper<ItemResponse> insertNewItem(ItemRequest itemRequest) {
+    public ResponseWrapper<ItemResponse> getAllItems() {
+        //TODO: update this once we have  a join query between item and stock record
+        final List<ItemResponse> itemResponseList = itemMapper.selectAll().stream().map(item -> new ItemResponse(
+                Long.valueOf(item.getId()),
+                item.getName(),
+                item.getDetail(),
+                List.of(),
+                stockRecordMapper.selectByPrimaryKey(item.getId()).getQuantity(),
+                item.getThreshold(),
+                item.getThreshold()
+        )).toList();
+        return ResponseWrapper.fromListOfResponseData(itemResponseList);
+    }
+
+    @Override
+    public ResponseWrapper<ItemResponse> getAllItemsWithLimit(final Integer limit) {
+        //TODO: update this to get the items from a query that limits rows
+        return ResponseWrapper.fromListOfResponseData(getAllItems().responseData().subList(0, limit));
+    }
+
+    @Override
+    public ResponseWrapper<ItemResponse> insertNewItem(final ItemRequest itemRequest) {
         //check if alert threshold is above re-order threshold
         if (itemRequest.quantityAlarmThreshold() < itemRequest.quantityReorderThreshold()) {
             //TODO: return error response object instead of string
@@ -77,28 +98,7 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
-    public ResponseWrapper<ItemResponse> getAllItems() {
-        //TODO: update this once we have  a join query between item and stock record
-        final List<ItemResponse> itemResponseList = itemMapper.selectAll().stream().map(item -> new ItemResponse(
-                Long.valueOf(item.getId()),
-                item.getName(),
-                item.getDetail(),
-                List.of(),
-                stockRecordMapper.selectByPrimaryKey(item.getId()).getQuantity(),
-                item.getThreshold(),
-                item.getThreshold()
-        )).toList();
-        return ResponseWrapper.fromListOfResponseData(itemResponseList);
-    }
-
-    @Override
-    public ResponseWrapper<ItemResponse> getAllItemsWithLimit(Integer limit) {
-        //TODO: update this to get the items from a query that limits rows
-        return ResponseWrapper.fromListOfResponseData(getAllItems().responseData().subList(0, limit));
-    }
-
-    @Override
-    public ResponseWrapper<ItemResponse> updateItem(ItemRequest itemRequest) {
+    public ResponseWrapper<ItemResponse> updateItem(final Integer itemId, final  ItemRequest itemRequest) {
         //check if alert threshold is above re-order threshold
         if (itemRequest.quantityAlarmThreshold() < itemRequest.quantityReorderThreshold()) {
             //TODO: return error response object instead of string
@@ -114,6 +114,14 @@ public class ItemServiceImpl implements ItemService {
             return new ResponseWrapper<>(
                     null,
                     "Vendor is not provided. Please provide a vendor"
+            );
+        }
+
+        if (itemMapper.selectByPrimaryKey(itemId) == null) {
+            //TODO: return exception with detail error
+            return new ResponseWrapper<>(
+                    null,
+                    "Item does not exist. Please provide an itemId that exists"
             );
         }
 
@@ -139,7 +147,7 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
-    public ResponseWrapper<ItemResponse> deleteItem(Integer itemId) {
+    public ResponseWrapper<ItemResponse> deleteItem(final Integer itemId) {
         itemMapper.deleteByPrimaryKey(itemId);
         return ResponseWrapper.<ItemResponse>builder().build();
     }
