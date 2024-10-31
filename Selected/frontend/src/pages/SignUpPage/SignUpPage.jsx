@@ -68,8 +68,16 @@ const SignUpPage = () => {
       ? (errorField = { ...errorField, email: false })
       : (errorField = { ...errorField, email: "Enter a correct email" });
     isValidPassword
-      ? (errorField = { ...errorField, password: false, confirmPassword: false })
-      : (errorField = { ...errorField, password: passwordErrorMessage, confirmPassword: true });
+      ? (errorField = {
+          ...errorField,
+          password: false,
+          confirmPassword: false,
+        })
+      : (errorField = {
+          ...errorField,
+          password: passwordErrorMessage,
+          confirmPassword: true,
+        });
 
     setErrors(errorField);
     return Boolean(
@@ -89,6 +97,26 @@ const SignUpPage = () => {
   const handleAccountCreation = () => {
     const isValid = isValidInput();
     if (!isValid) alert("Something is invalid");
+  };
+
+  const handleResetButton = () => {
+    setInputValues({
+      firstName: "",
+      lastName: "",
+      userName: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
+      adminCode: "",
+    });
+    setErrors({
+      firstName: false,
+      lastName: false,
+      userName: false,
+      email: false,
+      password: false,
+      confirmPassword: false,
+    });
   };
 
   return (
@@ -210,17 +238,7 @@ const SignUpPage = () => {
             </Button>
             <Button
               variant="contained"
-              onClick={() =>
-                setInputValues({
-                  firstName: "",
-                  lastName: "",
-                  userName: "",
-                  email: "",
-                  password: "",
-                  confirmPassword: "",
-                  adminCode: "",
-                })
-              }
+              onClick={handleResetButton}
               size="medium"
             >
               Reset
