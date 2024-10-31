@@ -43,7 +43,6 @@ function Navbar() {
   };
 
   const handleLogoutClick = () => {
-    console.log("Logout feature")
     handleCloseUserMenu();
 
   }

@@ -32,7 +32,7 @@ const SignUpPage = () => {
   });
 
   const isValidInput = () => {
-    let passwordErrorMessage; 
+    let passwordErrorMessage;
     let errorField = {};
     const {
       firstName = "",
@@ -49,11 +49,11 @@ const SignUpPage = () => {
     const isPasswordMatch = password === confirmPassword;
     const isValidPassword = isValidPasswordLength && isPasswordMatch;
     const isValidEmail = email.match(/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/g);
-    
-    if(!isPasswordMatch) {
-      passwordErrorMessage = "Password do not match"
+
+    if (!isPasswordMatch) {
+      passwordErrorMessage = "Password do not match";
     } else if (!isValidPasswordLength) {
-      passwordErrorMessage = "Password needs to be between 8 and 32 characters"
+      passwordErrorMessage = "Password needs to be between 8 and 32 characters";
     }
     firstName
       ? (errorField = { ...errorField, firstName: false })
@@ -67,12 +67,9 @@ const SignUpPage = () => {
     isValidEmail
       ? (errorField = { ...errorField, email: false })
       : (errorField = { ...errorField, email: "Enter a correct email" });
-    password
-      ? (errorField = { ...errorField, password: false })
-      : (errorField = { ...errorField, password: passwordErrorMessage });
-    confirmPassword
-      ? (errorField = { ...errorField, confirmPassword: false })
-      : (errorField = { ...errorField, confirmPassword: true });
+    isValidPassword
+      ? (errorField = { ...errorField, password: false, confirmPassword: false })
+      : (errorField = { ...errorField, password: passwordErrorMessage, confirmPassword: true });
 
     setErrors(errorField);
     return Boolean(
@@ -91,7 +88,6 @@ const SignUpPage = () => {
 
   const handleAccountCreation = () => {
     const isValid = isValidInput();
-    console.log("isValid", isValid);
     if (!isValid) alert("Something is invalid");
   };
 
@@ -99,7 +95,7 @@ const SignUpPage = () => {
     <Container maxWidth="sm">
       <Card variant="outlined" sx={{ backgroundColor: "#fafafa" }}>
         <CardHeader
-          title="Login"
+          title="Create An Account"
           sx={{
             textAlign: "center",
           }}

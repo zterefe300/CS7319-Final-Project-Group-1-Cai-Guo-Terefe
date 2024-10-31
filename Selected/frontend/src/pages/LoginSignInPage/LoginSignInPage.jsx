@@ -27,7 +27,6 @@ const LoginSignInPage = () => {
   }
 
   const handleLoginClick = () => {
-    console.log(inputValues)
   }
 
   const handleAccountCreationClick = () => {
