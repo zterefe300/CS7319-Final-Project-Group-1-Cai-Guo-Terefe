@@ -94,7 +94,7 @@ public class ItemServiceImpl implements ItemService {
     @Override
     public ResponseWrapper<ItemResponse> getAllItemsWithLimit(Integer limit) {
         //TODO: update this to get the items from a query that limits rows
-        return ResponseWrapper.fromListOfResponseData(getAllItems().getResponseData().subList(0, limit));
+        return ResponseWrapper.fromListOfResponseData(getAllItems().responseData().subList(0, limit));
     }
 
     @Override
