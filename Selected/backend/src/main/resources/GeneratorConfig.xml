@@ -37,7 +37,6 @@
         </table>
         <table tableName="stock_record" domainObjectName="StockRecord" >
             <generatedKey column="id" sqlStatement="MYSQL" identity="true"/>
-            <columnOverride column="opt_type" javaType="Integer" jdbcType="TINYINT"/>
         </table>
         <table tableName="vendor" domainObjectName="Vendor" >
             <generatedKey column="id" sqlStatement="MYSQL" identity="true"/>

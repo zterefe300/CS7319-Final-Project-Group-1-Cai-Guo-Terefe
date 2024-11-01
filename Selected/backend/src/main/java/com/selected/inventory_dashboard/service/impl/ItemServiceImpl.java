@@ -33,8 +33,8 @@ public class ItemServiceImpl implements ItemService {
                 item.getDetail(),
                 List.of(),
                 stockRecordMapper.selectByPrimaryKey(item.getId()).getQuantity(),
-                item.getThreshold(),
-                item.getThreshold()
+                item.getAlarmThreshold(),
+                item.getQuantityThreshold()
         )).toList();
         return ResponseWrapper.fromListOfResponseData(itemResponseList);
     }
@@ -79,13 +79,13 @@ public class ItemServiceImpl implements ItemService {
                 .name(itemRequest.name())
                 .detail(itemRequest.detail())
                 .pics(itemPicturesRootUrl)
-                .threshold(itemRequest.quantityAlarmThreshold())
-                .vendorId(itemRequest.vendor().vendorId()).createTime(Date.from(Instant.now())).build());
+                .quantityThreshold(itemRequest.quantityAlarmThreshold())
+                .vendorId(itemRequest.vendor().vendorId()).effectiveDate(Date.from(Instant.now())).build());
 
         final Item item = itemMapper.selectByPrimaryKey(itemId);
 
         //Create stock record of the item with quantity one since we only add a single item.
-        Integer stockRecordId = stockRecordMapper.insert(StockRecord.builder().itemId(itemId).quantity(1).createTime(Date.from(Instant.now())).build());
+        Integer stockRecordId = stockRecordMapper.insert(StockRecord.builder().itemId(itemId).quantity(1).effectiveDate(Date.from(Instant.now())).build());
         final StockRecord stockRecord = stockRecordMapper.selectByPrimaryKey(stockRecordId);
 
         //TODO: get picture urls from the the picture files manager service
@@ -93,7 +93,7 @@ public class ItemServiceImpl implements ItemService {
 
         return ResponseWrapper.fromSingleResponseData(new ItemResponse(
                 Long.valueOf(itemId), item.getName(), item.getDetail(), pictureUrls, stockRecord.getQuantity(),
-                item.getThreshold(), item.getThreshold()
+                item.getAlarmThreshold(), item.getQuantityThreshold()
         ));
     }
 
@@ -130,7 +130,7 @@ public class ItemServiceImpl implements ItemService {
         final Item itemToUpdate = Item.builder()
                 .name(itemRequest.name())
                 .detail(itemRequest.detail())
-                .threshold(itemRequest.quantityAlarmThreshold()).createTime(Date.from(Instant.now())).build();
+                .quantityThreshold(itemRequest.quantityAlarmThreshold()).effectiveDate(Date.from(Instant.now())).build();
 
         final int updatedItemId = itemMapper.updateByPrimaryKey(
                 itemToUpdate
@@ -143,7 +143,7 @@ public class ItemServiceImpl implements ItemService {
         final Integer currentItemQuantity = 0;
 
         return ResponseWrapper.fromSingleResponseData(new ItemResponse((long) updatedItemId, updatedItem.getName(), updatedItem.getDetail(),
-                pictureUrls, currentItemQuantity, updatedItem.getThreshold(), updatedItem.getThreshold()));
+                pictureUrls, currentItemQuantity, updatedItem.getAlarmThreshold(), updatedItem.getQuantityThreshold()));
     }
 
     @Override

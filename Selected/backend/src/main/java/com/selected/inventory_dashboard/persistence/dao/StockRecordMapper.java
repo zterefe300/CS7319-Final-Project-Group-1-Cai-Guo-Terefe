@@ -13,4 +13,9 @@ public interface StockRecordMapper {
     List<StockRecord> selectAll();
 
     int updateByPrimaryKey(StockRecord record);
+
+    /**
+     * get stockRecords by itemId
+     */
+    List<StockRecord> findByItemId(int itemId);
 }

@@ -1,11 +1,14 @@
 package com.selected.inventory_dashboard.persistence.entity;
 
-import lombok.*;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 
 import java.util.Date;
-
-@Setter
-@Getter
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -16,11 +19,10 @@ public class StockRecord {
 
     private Integer quantity;
 
-    private Integer optType;
-
     private String operator;
 
-    private Date createTime;
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "UTC")
+    private Date effectiveDate;
 
-    private Date updateTime;
+
 }

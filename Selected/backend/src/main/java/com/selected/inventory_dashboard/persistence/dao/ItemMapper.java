@@ -13,4 +13,6 @@ public interface ItemMapper {
     List<Item> selectAll();
 
     int updateByPrimaryKey(Item record);
+
+    List<Item> selectLimit(int limit);
 }
