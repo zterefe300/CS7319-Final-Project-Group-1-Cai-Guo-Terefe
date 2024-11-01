@@ -42,14 +42,14 @@
     from user
     where id = #{id,jdbcType=INTEGER}
   </select>
-
-  <select id="selectByUserName"  resultMap="BaseResultMap">
-    select id, user_name, password, first_name, last_name, role_type, create_time, update_time
-    from user
-    where user_name = #{userName}
-  </select>
   <select id="selectAll" resultMap="BaseResultMap">
     select id, user_name, password, first_name, last_name, role_type, create_time, update_time
     from user
+  </select>
+
+  <select id="selectByUserName" parameterType="string" resultMap="BaseResultMap">
+    select id, user_name, password, first_name, last_name, role_type, create_time, update_time
+    from user
+    where user_name = #{userName}
   </select>
 </mapper>
