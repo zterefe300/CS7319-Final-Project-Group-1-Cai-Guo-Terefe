@@ -1,25 +1,26 @@
 package com.selected.inventory_dashboard.persistence.entity;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.util.Date;
 
 @Setter
 @Getter
-public class StorkRecord {
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class StockRecord {
     private Integer id;
 
     private Integer itemId;
 
     private Integer quantity;
 
-    private Boolean optType;
+    private Integer optType;
 
     private String operator;
 
     private Date createTime;
 
     private Date updateTime;
-
 }

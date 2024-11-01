@@ -1,13 +1,14 @@
 package com.selected.inventory_dashboard.persistence.entity;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.util.Date;
 
-
 @Setter
 @Getter
+@NoArgsConstructor
+@Builder
+@AllArgsConstructor
 public class Item {
     private Integer id;
 
