@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.arch.selected.dao.EmployeeMapper">
+  <resultMap id="BaseResultMap" type="com.arch.selected.entity.Employee">
+    <id column="id" jdbcType="INTEGER" property="id" />
+    <result column="userName" jdbcType="VARCHAR" property="username" />
+    <result column="password" jdbcType="VARCHAR" property="password" />
+    <result column="firstName" jdbcType="VARCHAR" property="firstname" />
+    <result column="lastName" jdbcType="VARCHAR" property="lastname" />
+    <result column="create_time" jdbcType="TIMESTAMP" property="createTime" />
+    <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
+  </resultMap>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
+    delete from employee
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.arch.selected.entity.Employee">
+    <selectKey keyProperty="id" order="AFTER" resultType="java.lang.Integer">
+      SELECT LAST_INSERT_ID()
+    </selectKey>
+    insert into employee (userName, password, firstName, 
+      lastName, create_time, update_time
+      )
+    values (#{username,jdbcType=VARCHAR}, #{password,jdbcType=VARCHAR}, #{firstname,jdbcType=VARCHAR}, 
+      #{lastname,jdbcType=VARCHAR}, #{createTime,jdbcType=TIMESTAMP}, #{updateTime,jdbcType=TIMESTAMP}
+      )
+  </insert>
+  <update id="updateByPrimaryKey" parameterType="com.arch.selected.entity.Employee">
+    update employee
+    set userName = #{username,jdbcType=VARCHAR},
+      password = #{password,jdbcType=VARCHAR},
+      firstName = #{firstname,jdbcType=VARCHAR},
+      lastName = #{lastname,jdbcType=VARCHAR},
+      create_time = #{createTime,jdbcType=TIMESTAMP},
+      update_time = #{updateTime,jdbcType=TIMESTAMP}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+    select id, userName, password, firstName, lastName, create_time, update_time
+    from employee
+    where id = #{id,jdbcType=INTEGER}
+  </select>
+  <select id="selectAll" resultMap="BaseResultMap">
+    select id, userName, password, firstName, lastName, create_time, update_time
+    from employee
+  </select>
+</mapper>

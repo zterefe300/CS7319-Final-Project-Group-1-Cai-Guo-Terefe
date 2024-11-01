@@ -1,8 +1,10 @@
-package com.selected.inventory_dashboard.controller;
+package com.arch.selected.controller;
 
-import com.selected.inventory_dashboard.persistence.entity.Item;
-import com.selected.inventory_dashboard.service.interfaces.ItemService;
+import com.arch.selected.entity.Item;
+import com.arch.selected.service.ItemService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -12,17 +14,11 @@ import org.springframework.web.bind.annotation.RestController;
  **/
 @RestController
 public class ItemController {
-    private final ItemService itemService;
-
-    public ItemController(ItemService itemService) {
-        this.itemService = itemService;
-    }
-
+    @Autowired
+    private ItemService itemService;
     @GetMapping("/hello")
     public Item findById(){
         return itemService.findById(1);
+
     }
-
-
-
 }

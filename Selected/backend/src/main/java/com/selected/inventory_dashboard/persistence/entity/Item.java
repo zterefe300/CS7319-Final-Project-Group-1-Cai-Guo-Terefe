@@ -1,14 +1,18 @@
 package com.selected.inventory_dashboard.persistence.entity;
 
-import lombok.*;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 
 import java.util.Date;
 
-@Setter
-@Getter
+@Data
 @NoArgsConstructor
-@Builder
 @AllArgsConstructor
+@Builder
 public class Item {
     private Integer id;
 
@@ -18,18 +22,14 @@ public class Item {
 
     private String pics;
 
-    private Integer qty;
+    private Integer alarmThreshold;
 
-    private Integer qtySold;
-
-    private Integer threshold;
+    private Integer quantityThreshold;
 
     private Integer vendorId;
 
-    private Integer sort;
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "UTC")
+    private Date effectiveDate;
 
-    private Date createTime;
-
-    private Date updateTime;
 
 }

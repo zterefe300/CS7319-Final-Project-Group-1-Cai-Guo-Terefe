@@ -1,6 +1,6 @@
-package com.selected.inventory_dashboard.persistence.dao;
+package com.arch.selected.dao;
 
-import com.selected.inventory_dashboard.persistence.entity.Item;
+import com.arch.selected.entity.Item;
 import java.util.List;
 
 public interface ItemMapper {
@@ -13,6 +13,4 @@ public interface ItemMapper {
     List<Item> selectAll();
 
     int updateByPrimaryKey(Item record);
-
-    List<Item> selectLimit(int limit);
 }

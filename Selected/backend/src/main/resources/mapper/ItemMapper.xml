@@ -6,13 +6,10 @@
     <result column="name" jdbcType="VARCHAR" property="name" />
     <result column="detail" jdbcType="VARCHAR" property="detail" />
     <result column="pics" jdbcType="VARCHAR" property="pics" />
-    <result column="qty" jdbcType="INTEGER" property="qty" />
-    <result column="qty_sold" jdbcType="INTEGER" property="qtySold" />
-    <result column="threshold" jdbcType="INTEGER" property="threshold" />
+    <result column="alarm_threshold" jdbcType="INTEGER" property="alarmThreshold" />
+    <result column="quantity_threshold" jdbcType="INTEGER" property="quantityThreshold" />
     <result column="vendor_id" jdbcType="INTEGER" property="vendorId" />
-    <result column="sort" jdbcType="INTEGER" property="sort" />
-    <result column="create_time" jdbcType="TIMESTAMP" property="createTime" />
-    <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
+    <result column="effective_date" jdbcType="TIMESTAMP" property="effectiveDate" />
   </resultMap>
   <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
     delete from item
@@ -23,37 +20,35 @@
       SELECT LAST_INSERT_ID()
     </selectKey>
     insert into item (name, detail, pics, 
-      qty, qty_sold, threshold, 
-      vendor_id, sort, create_time, 
-      update_time)
+      alarm_threshold, quantity_threshold, vendor_id, 
+      effective_date)
     values (#{name,jdbcType=VARCHAR}, #{detail,jdbcType=VARCHAR}, #{pics,jdbcType=VARCHAR}, 
-      #{qty,jdbcType=INTEGER}, #{qtySold,jdbcType=INTEGER}, #{threshold,jdbcType=INTEGER}, 
-      #{vendorId,jdbcType=INTEGER}, #{sort,jdbcType=INTEGER}, #{createTime,jdbcType=TIMESTAMP}, 
-      #{updateTime,jdbcType=TIMESTAMP})
+      #{alarmThreshold,jdbcType=INTEGER}, #{quantityThreshold,jdbcType=INTEGER}, #{vendorId,jdbcType=INTEGER}, 
+      #{effectiveDate,jdbcType=TIMESTAMP})
   </insert>
   <update id="updateByPrimaryKey" parameterType="com.selected.inventory_dashboard.persistence.entity.Item">
     update item
     set name = #{name,jdbcType=VARCHAR},
       detail = #{detail,jdbcType=VARCHAR},
       pics = #{pics,jdbcType=VARCHAR},
-      qty = #{qty,jdbcType=INTEGER},
-      qty_sold = #{qtySold,jdbcType=INTEGER},
-      threshold = #{threshold,jdbcType=INTEGER},
+      alarm_threshold = #{alarmThreshold,jdbcType=INTEGER},
+      quantity_threshold = #{quantityThreshold,jdbcType=INTEGER},
       vendor_id = #{vendorId,jdbcType=INTEGER},
-      sort = #{sort,jdbcType=INTEGER},
-      create_time = #{createTime,jdbcType=TIMESTAMP},
-      update_time = #{updateTime,jdbcType=TIMESTAMP}
+      effective_date = #{effectiveDate,jdbcType=TIMESTAMP}
     where id = #{id,jdbcType=INTEGER}
   </update>
   <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
-    select id, name, detail, pics, qty, qty_sold, threshold, vendor_id, sort, create_time, 
-    update_time
+    select id, name, detail, pics, alarm_threshold, quantity_threshold, vendor_id, effective_date
     from item
     where id = #{id,jdbcType=INTEGER}
   </select>
   <select id="selectAll" resultMap="BaseResultMap">
-    select id, name, detail, pics, qty, qty_sold, threshold, vendor_id, sort, create_time, 
-    update_time
+    select id, name, detail, pics, alarm_threshold, quantity_threshold, vendor_id, effective_date
     from item
+  </select>
+
+  <select id="selectLimit" parameterType="java.lang.Integer"  resultMap="BaseResultMap">
+    select id, name, detail, pics, alarm_threshold, quantity_threshold, vendor_id, effective_date
+    from item limit #{limit}
   </select>
 </mapper>
