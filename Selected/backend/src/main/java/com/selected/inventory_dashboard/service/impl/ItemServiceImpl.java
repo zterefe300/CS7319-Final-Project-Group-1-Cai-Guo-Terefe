@@ -34,10 +34,10 @@ public class ItemServiceImpl implements ItemService {
     public List<ItemResponse> getAllItems() {
         //TODO: update this once we have  a join query between item and stock record
         return itemMapper.selectAll().stream().map(item -> new ItemResponse(
-                Long.valueOf(item.getId()),
+                item.getId(),
                 item.getName(),
                 item.getDetail(),
-                List.of(),
+                item.getPics(),
                 stockRecordMapper.selectByPrimaryKey(item.getId()).getQuantity(),
                 item.getAlarmThreshold(),
                 item.getQuantityThreshold()
@@ -47,16 +47,17 @@ public class ItemServiceImpl implements ItemService {
     @Override
     public List<ItemResponse> getAllItemsWithLimit(final Integer limit) {
         return itemMapper.selectLimit(limit).stream().map(item -> new ItemResponse(
-                Long.valueOf(item.getId()),
+                item.getId(),
                 item.getName(),
                 item.getDetail(),
-                List.of(),
+                item.getPics(),
                 stockRecordMapper.selectByPrimaryKey(item.getId()).getQuantity(),
                 item.getAlarmThreshold(),
                 item.getQuantityThreshold()
         )).toList();
     }
 
+    ///TODO: Breakdown service into methods. Add error handling for insert operations
     @Override
     public ItemResponse insertNewItem(final ItemRequest itemRequest) {
         //check if alert threshold is above re-order threshold
@@ -71,7 +72,7 @@ public class ItemServiceImpl implements ItemService {
             throw new NoVendorDataException();
         }
 
-        //Throw no vendor data found, when a vendor id is provided but the vendor doesn't exist in thedb
+        //Throw no vendor data found, when a vendor id is provided but the vendor doesn't exist in the db
         if (vendorMapper.selectByPrimaryKey(vendorRequest.vendorId()) == null) {
             throw NoVendorDataException.vendorNotFoundException();
         }
@@ -79,14 +80,12 @@ public class ItemServiceImpl implements ItemService {
         //TODO: call picture files manager service to upload the pictures
         final String itemPicturesRootUrl = "";
 
-
-        //TODO: once alarm and reorder threshold are available update them
-        //TODO: update the insert with effective date once we have effective date
         Integer itemId = itemMapper.insert(Item.builder()
                 .name(itemRequest.name())
                 .detail(itemRequest.detail())
                 .pics(itemPicturesRootUrl)
-                .quantityThreshold(itemRequest.quantityAlarmThreshold())
+                .alarmThreshold(itemRequest.quantityAlarmThreshold())
+                .quantityThreshold(itemRequest.quantityReorderThreshold())
                 .vendorId(itemRequest.vendor().vendorId()).effectiveDate(Date.from(Instant.now())).build());
 
         final Item item = itemMapper.selectByPrimaryKey(itemId);
@@ -95,16 +94,14 @@ public class ItemServiceImpl implements ItemService {
         Integer stockRecordId = stockRecordMapper.insert(StockRecord.builder().itemId(itemId).quantity(1).effectiveDate(Date.from(Instant.now())).build());
         final StockRecord stockRecord = stockRecordMapper.selectByPrimaryKey(stockRecordId);
 
-        //TODO: get picture urls from the the picture files manager service
-        final List<String> pictureUrls = List.of();
-
 
         return new ItemResponse(
-                Long.valueOf(itemId), item.getName(), item.getDetail(), pictureUrls, stockRecord.getQuantity(),
+                itemId, item.getName(), item.getDetail(), item.getPics(), stockRecord.getQuantity(),
                 item.getAlarmThreshold(), item.getQuantityThreshold()
         );
     }
 
+    ///TODO: Breakdown service into methods. Add error handling for update operations
     @Override
     public ItemResponse updateItem(final Integer itemId, final ItemRequest itemRequest) {
         //check if alert threshold is above re-order threshold
@@ -122,25 +119,25 @@ public class ItemServiceImpl implements ItemService {
             throw NoVendorDataException.vendorNotFoundException();
         }
 
-        //TODO: Include implementation for updating quantity in stock once we have stock record get by ItemId query(Can do service call)
-        //TODO: Maybe include vendor update to(Can do service call)
         final Item itemToUpdate = Item.builder()
                 .name(itemRequest.name())
                 .detail(itemRequest.detail())
-                .quantityThreshold(itemRequest.quantityAlarmThreshold()).effectiveDate(Date.from(Instant.now())).build();
+                .alarmThreshold(itemRequest.quantityAlarmThreshold())
+                .quantityThreshold(itemRequest.quantityReorderThreshold())
+                .effectiveDate(Date.from(Instant.now())).build();
 
-        final int updatedItemId = itemMapper.updateByPrimaryKey(
+        //Update item
+        itemMapper.updateByPrimaryKey(
                 itemToUpdate
         );
-        final Item updatedItem = itemMapper.selectByPrimaryKey(updatedItemId);
+        //Update stock record
+         stockRecordMapper.updateByPrimaryKey(StockRecord.builder()
+                .itemId(itemId).quantity(itemRequest.quantity())
+                .effectiveDate(Date.from(Instant.now())).build());
 
-        //TODO: get list of picture urls from picture management service
-        final List<String> pictureUrls = List.of();
-        //TODO: get this from stock record
-        final Integer currentItemQuantity = 0;
-
-        return new ItemResponse((long) updatedItemId, updatedItem.getName(), updatedItem.getDetail(),
-                pictureUrls, currentItemQuantity, updatedItem.getAlarmThreshold(), updatedItem.getQuantityThreshold());
+        final Item updatedItem = itemMapper.selectByPrimaryKey(itemId);
+        return new ItemResponse(itemId, updatedItem.getName(), updatedItem.getDetail(),
+                updatedItem.getPics(), itemRequest.quantity(), updatedItem.getAlarmThreshold(), updatedItem.getQuantityThreshold());
     }
 
     @Override
