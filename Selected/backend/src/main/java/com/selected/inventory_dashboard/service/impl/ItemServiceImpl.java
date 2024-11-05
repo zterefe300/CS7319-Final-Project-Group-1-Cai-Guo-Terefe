@@ -2,9 +2,12 @@ package com.selected.inventory_dashboard.service.impl;
 
 import com.selected.inventory_dashboard.dtovo.req.ItemRequest;
 import com.selected.inventory_dashboard.dtovo.res.ItemResponse;
-import com.selected.inventory_dashboard.dtovo.res.ResponseWrapper;
+import com.selected.inventory_dashboard.exception.AlarmThresholdException;
+import com.selected.inventory_dashboard.exception.NoItemDataException;
+import com.selected.inventory_dashboard.exception.NoVendorDataException;
 import com.selected.inventory_dashboard.persistence.dao.ItemMapper;
 import com.selected.inventory_dashboard.persistence.dao.StockRecordMapper;
+import com.selected.inventory_dashboard.persistence.dao.VendorMapper;
 import com.selected.inventory_dashboard.persistence.entity.Item;
 import com.selected.inventory_dashboard.persistence.entity.StockRecord;
 import com.selected.inventory_dashboard.service.interfaces.ItemService;
@@ -18,16 +21,18 @@ import java.util.List;
 public class ItemServiceImpl implements ItemService {
     private final ItemMapper itemMapper;
     private final StockRecordMapper stockRecordMapper;
+    private final VendorMapper vendorMapper;
 
-    public ItemServiceImpl(final ItemMapper itemMapper, final StockRecordMapper stockRecordMapper) {
+    public ItemServiceImpl(final ItemMapper itemMapper, final StockRecordMapper stockRecordMapper, final VendorMapper vendorMapper) {
         this.itemMapper = itemMapper;
         this.stockRecordMapper = stockRecordMapper;
+        this.vendorMapper = vendorMapper;
     }
 
     @Override
-    public ResponseWrapper<ItemResponse> getAllItems() {
+    public List<ItemResponse> getAllItems() {
         //TODO: update this once we have  a join query between item and stock record
-        final List<ItemResponse> itemResponseList = itemMapper.selectAll().stream().map(item -> new ItemResponse(
+        return itemMapper.selectAll().stream().map(item -> new ItemResponse(
                 Long.valueOf(item.getId()),
                 item.getName(),
                 item.getDetail(),
@@ -36,37 +41,30 @@ public class ItemServiceImpl implements ItemService {
                 item.getAlarmThreshold(),
                 item.getQuantityThreshold()
         )).toList();
-        return ResponseWrapper.fromListOfResponseData(itemResponseList);
     }
 
     @Override
-    public ResponseWrapper<ItemResponse> getAllItemsWithLimit(final Integer limit) {
-        //TODO: update this to get the items from a query that limits rows
-        return ResponseWrapper.fromListOfResponseData(getAllItems().responseData().subList(0, limit));
+    public List<ItemResponse> getAllItemsWithLimit(final Integer limit) {
+        return itemMapper.selectLimit(limit).stream().map(item -> new ItemResponse(
+                Long.valueOf(item.getId()),
+                item.getName(),
+                item.getDetail(),
+                List.of(),
+                stockRecordMapper.selectByPrimaryKey(item.getId()).getQuantity(),
+                item.getAlarmThreshold(),
+                item.getQuantityThreshold()
+        )).toList();
     }
 
     @Override
-    public ResponseWrapper<ItemResponse> insertNewItem(final ItemRequest itemRequest) {
+    public ItemResponse insertNewItem(final ItemRequest itemRequest) {
         //check if alert threshold is above re-order threshold
         if (itemRequest.quantityAlarmThreshold() < itemRequest.quantityReorderThreshold()) {
-            //TODO: return error response object instead of string
-            return new ResponseWrapper<>(
-                    null,
-                    "Alarm threshold should always be above quantity threshold"
-            );
+           throw new AlarmThresholdException();
         }
 
-        if (itemRequest.vendor() == null) {
-            //TODO: return exception with detail error
-            return new ResponseWrapper<>(
-                    null,
-                    "Vendor is not provided. Please provide a vendor"
-            );
-        }
-
-        //TODO: call vendor service to create new vendor if the vendor id is null
-        if(itemRequest.vendor().vendorId() == null) {
-            //vendorService.createVendor(itemRequest.vendor())
+        if (itemRequest.vendor() == null || itemRequest.vendor().vendorId() == null) {
+            throw new NoVendorDataException();
         }
 
         //TODO: call picture files manager service to upload the pictures
@@ -91,39 +89,28 @@ public class ItemServiceImpl implements ItemService {
         //TODO: get picture urls from the the picture files manager service
         final List<String> pictureUrls = List.of();
 
-        return ResponseWrapper.fromSingleResponseData(new ItemResponse(
+
+        return new ItemResponse(
                 Long.valueOf(itemId), item.getName(), item.getDetail(), pictureUrls, stockRecord.getQuantity(),
                 item.getAlarmThreshold(), item.getQuantityThreshold()
-        ));
+        );
     }
 
     @Override
-    public ResponseWrapper<ItemResponse> updateItem(final Integer itemId, final  ItemRequest itemRequest) {
+    public ItemResponse updateItem(final Integer itemId, final ItemRequest itemRequest) {
         //check if alert threshold is above re-order threshold
         if (itemRequest.quantityAlarmThreshold() < itemRequest.quantityReorderThreshold()) {
-            //TODO: return error response object instead of string
-            return new ResponseWrapper<>(
-                    null,
-                    "Alarm threshold should always be above quantity threshold"
-            );
-        }
-
-
-        if (itemRequest.vendor() == null) {
-            //TODO: return exception with detail error
-            return new ResponseWrapper<>(
-                    null,
-                    "Vendor is not provided. Please provide a vendor"
-            );
+            throw new AlarmThresholdException();
         }
 
         if (itemMapper.selectByPrimaryKey(itemId) == null) {
-            //TODO: return exception with detail error
-            return new ResponseWrapper<>(
-                    null,
-                    "Item does not exist. Please provide an itemId that exists"
-            );
+            throw new NoItemDataException();
         }
+
+        if (itemRequest.vendor() == null && vendorMapper.selectByPrimaryKey(itemRequest.vendor().vendorId()) == null) {
+            throw NoVendorDataException.vendorNotFoundException();
+        }
+
 
         //TODO: Include implementation for updating quantity in stock once we have stock record get by ItemId query(Can do service call)
         //TODO: Maybe include vendor update to(Can do service call)
@@ -142,13 +129,13 @@ public class ItemServiceImpl implements ItemService {
         //TODO: get this from stock record
         final Integer currentItemQuantity = 0;
 
-        return ResponseWrapper.fromSingleResponseData(new ItemResponse((long) updatedItemId, updatedItem.getName(), updatedItem.getDetail(),
-                pictureUrls, currentItemQuantity, updatedItem.getAlarmThreshold(), updatedItem.getQuantityThreshold()));
+        return new ItemResponse((long) updatedItemId, updatedItem.getName(), updatedItem.getDetail(),
+                pictureUrls, currentItemQuantity, updatedItem.getAlarmThreshold(), updatedItem.getQuantityThreshold());
     }
 
     @Override
-    public ResponseWrapper<ItemResponse> deleteItem(final Integer itemId) {
+    public boolean deleteItem(final Integer itemId) {
         itemMapper.deleteByPrimaryKey(itemId);
-        return ResponseWrapper.<ItemResponse>builder().build();
+        return itemMapper.selectByPrimaryKey(itemId) == null;
     }
 }
