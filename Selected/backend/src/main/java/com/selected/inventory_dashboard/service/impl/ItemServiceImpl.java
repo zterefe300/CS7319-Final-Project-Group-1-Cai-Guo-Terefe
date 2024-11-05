@@ -1,6 +1,7 @@
 package com.selected.inventory_dashboard.service.impl;
 
 import com.selected.inventory_dashboard.dtovo.req.ItemRequest;
+import com.selected.inventory_dashboard.dtovo.req.VendorRequest;
 import com.selected.inventory_dashboard.dtovo.res.ItemResponse;
 import com.selected.inventory_dashboard.exception.AlarmThresholdException;
 import com.selected.inventory_dashboard.exception.NoItemDataException;
@@ -63,8 +64,16 @@ public class ItemServiceImpl implements ItemService {
            throw new AlarmThresholdException();
         }
 
-        if (itemRequest.vendor() == null || itemRequest.vendor().vendorId() == null) {
+        final VendorRequest vendorRequest = itemRequest.vendor();
+
+        //Throw default no vendor data exception, if vendor data is not provided as part if the request
+        if (vendorRequest == null || vendorRequest.vendorId() == null) {
             throw new NoVendorDataException();
+        }
+
+        //Throw no vendor data found, when a vendor id is provided but the vendor doesn't exist in thedb
+        if (vendorMapper.selectByPrimaryKey(vendorRequest.vendorId()) == null) {
+            throw NoVendorDataException.vendorNotFoundException();
         }
 
         //TODO: call picture files manager service to upload the pictures
@@ -107,10 +116,11 @@ public class ItemServiceImpl implements ItemService {
             throw new NoItemDataException();
         }
 
-        if (itemRequest.vendor() == null && vendorMapper.selectByPrimaryKey(itemRequest.vendor().vendorId()) == null) {
+        final VendorRequest vendorRequest = itemRequest.vendor();
+
+        if (vendorRequest != null && vendorMapper.selectByPrimaryKey(vendorRequest.vendorId()) == null) {
             throw NoVendorDataException.vendorNotFoundException();
         }
-
 
         //TODO: Include implementation for updating quantity in stock once we have stock record get by ItemId query(Can do service call)
         //TODO: Maybe include vendor update to(Can do service call)
