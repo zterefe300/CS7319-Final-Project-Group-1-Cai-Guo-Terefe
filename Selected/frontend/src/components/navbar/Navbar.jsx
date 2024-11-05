@@ -1,9 +1,8 @@
 import React, { useState } from "react";
-import { NavLink, Outlet } from "react-router-dom";
+import { Outlet, useNavigate } from "react-router-dom";
 import MenuOutlinedIcon from '@mui/icons-material/MenuOutlined';
 import MenuIcon from '@mui/icons-material/Menu';
 import {
-  Avatar,
   AppBar,
   Box,
   Button,
@@ -24,6 +23,8 @@ import '@fontsource/roboto/700.css';
 const pages = ['Products', 'Pricing', 'Blog'];
 
 function Navbar() {
+  const navigate = useNavigate();
+
   const [anchorElNav, setAnchorElNav] = useState(null);
   const [anchorElUser, setAnchorElUser] = useState(null);
 
@@ -44,8 +45,12 @@ function Navbar() {
 
   const handleLogoutClick = () => {
     handleCloseUserMenu();
-
   }
+
+  const handleProfilePageClick = () => {
+    navigate("/profile", { replace: true })
+  }
+
   return (
     <>
       <AppBar position="static">
@@ -134,6 +139,9 @@ function Navbar() {
                 open={Boolean(anchorElUser)}
                 onClose={handleCloseUserMenu}
               >
+                <MenuItem onClick={handleProfilePageClick}>
+                  Profile Page
+                </MenuItem>
                 <MenuItem onClick={handleLogoutClick}>
                   Logout
                 </MenuItem>
