@@ -12,7 +12,10 @@ import com.selected.inventory_dashboard.persistence.dao.VendorMapper;
 import com.selected.inventory_dashboard.persistence.entity.Item;
 import com.selected.inventory_dashboard.persistence.entity.StockRecord;
 import com.selected.inventory_dashboard.service.interfaces.ItemService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.Instant;
 import java.util.Date;
@@ -20,14 +23,18 @@ import java.util.List;
 
 @Service
 public class ItemServiceImpl implements ItemService {
+    private static final Logger logger = LoggerFactory.getLogger(ItemServiceImpl.class);
+
     private final ItemMapper itemMapper;
     private final StockRecordMapper stockRecordMapper;
     private final VendorMapper vendorMapper;
+    private final FileUploaderServiceCoordinator fileUploaderServiceCoordinator;
 
-    public ItemServiceImpl(final ItemMapper itemMapper, final StockRecordMapper stockRecordMapper, final VendorMapper vendorMapper) {
+    public ItemServiceImpl(final ItemMapper itemMapper, final StockRecordMapper stockRecordMapper, final VendorMapper vendorMapper, final FileUploaderServiceCoordinator fileUploaderServiceCoordinator) {
         this.itemMapper = itemMapper;
         this.stockRecordMapper = stockRecordMapper;
         this.vendorMapper = vendorMapper;
+        this.fileUploaderServiceCoordinator = fileUploaderServiceCoordinator;
     }
 
     @Override
@@ -77,8 +84,9 @@ public class ItemServiceImpl implements ItemService {
             throw NoVendorDataException.vendorNotFoundException();
         }
 
-        //TODO: call picture files manager service to upload the pictures
-        final String itemPicturesRootUrl = "";
+        final MultipartFile pictureStream = itemRequest.picturesStream();
+        //TODO: Pass custom name with the item id.
+        final String itemPicturesRootUrl = insertOrUpdatePictureAndGetUrl(pictureStream);
 
         Integer itemId = itemMapper.insert(Item.builder()
                 .name(itemRequest.name())
@@ -91,9 +99,9 @@ public class ItemServiceImpl implements ItemService {
         final Item item = itemMapper.selectByPrimaryKey(itemId);
 
         //Create stock record of the item with quantity one since we only add a single item.
-        Integer stockRecordId = stockRecordMapper.insert(StockRecord.builder().itemId(itemId).quantity(1).effectiveDate(Date.from(Instant.now())).build());
+        Integer stockRecordId = stockRecordMapper.insert(StockRecord.builder().itemId(itemId)
+                .quantity(1).effectiveDate(Date.from(Instant.now())).build());
         final StockRecord stockRecord = stockRecordMapper.selectByPrimaryKey(stockRecordId);
-
 
         return new ItemResponse(
                 itemId, item.getName(), item.getDetail(), item.getPics(), stockRecord.getQuantity(),
@@ -126,6 +134,17 @@ public class ItemServiceImpl implements ItemService {
                 .quantityThreshold(itemRequest.quantityReorderThreshold())
                 .effectiveDate(Date.from(Instant.now())).build();
 
+        //TODO: append the item id and provide custom filename
+        //TODO: delete the existing picture url
+        final String updatedPictureFileUrl = insertOrUpdatePictureAndGetUrl(itemRequest.picturesStream());
+        //Avoid updating current item picture url if the new updated picture url is null
+        if (updatedPictureFileUrl != null) {
+            itemToUpdate.setPics(updatedPictureFileUrl);
+        } else {
+            logger.debug("Skipping to update picture url because the new updated url is found to be null. " +
+                    "Please try again by uploading new media");
+        }
+
         //Update item
         itemMapper.updateByPrimaryKey(
                 itemToUpdate
@@ -144,5 +163,12 @@ public class ItemServiceImpl implements ItemService {
     public boolean deleteItem(final Integer itemId) {
         itemMapper.deleteByPrimaryKey(itemId);
         return itemMapper.selectByPrimaryKey(itemId) == null;
+    }
+
+    private String insertOrUpdatePictureAndGetUrl(final MultipartFile pictureFile) {
+        if (pictureFile != null) {
+            return fileUploaderServiceCoordinator.uploadPicture(pictureFile, "");
+        }
+        return null;
     }
 }

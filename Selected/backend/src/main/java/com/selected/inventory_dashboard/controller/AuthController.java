@@ -3,7 +3,7 @@ package com.selected.inventory_dashboard.controller;
 import com.selected.inventory_dashboard.dtovo.req.LoginDto;
 import com.selected.inventory_dashboard.dtovo.req.SignupDto;
 import com.selected.inventory_dashboard.dtovo.res.LoginRes;
-import com.selected.inventory_dashboard.service.AuthService;
+import com.selected.inventory_dashboard.service.interfaces.AuthService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
