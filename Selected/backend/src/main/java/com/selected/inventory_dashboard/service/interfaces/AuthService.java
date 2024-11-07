@@ -1,4 +1,4 @@
-package com.selected.inventory_dashboard.service;
+package com.selected.inventory_dashboard.service.interfaces;
 
 import com.selected.inventory_dashboard.dtovo.req.LoginDto;
 import com.selected.inventory_dashboard.dtovo.req.SignupDto;
