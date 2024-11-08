@@ -5,7 +5,7 @@ import com.selected.inventory_dashboard.dtovo.req.LoginDto;
 import com.selected.inventory_dashboard.dtovo.req.SignupDto;
 import com.selected.inventory_dashboard.persistence.dao.UserMapper;
 import com.selected.inventory_dashboard.persistence.entity.User;
-import com.selected.inventory_dashboard.service.AuthService;
+import com.selected.inventory_dashboard.service.interfaces.AuthService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -13,7 +13,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
-
 
 import java.util.Objects;
 

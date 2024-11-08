@@ -2,10 +2,12 @@ package com.selected.inventory_dashboard.controller;
 
 import com.selected.inventory_dashboard.dtovo.req.ItemRequest;
 import com.selected.inventory_dashboard.dtovo.res.ItemResponse;
-import com.selected.inventory_dashboard.dtovo.res.ResponseWrapper;
 import com.selected.inventory_dashboard.service.interfaces.ItemService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
 
 /**
  * @author: Haiyan Cai
@@ -22,38 +24,27 @@ public class ItemController {
     }
 
     @GetMapping
-    public ResponseEntity<ResponseWrapper<ItemResponse>> getAllItems() {
+    public ResponseEntity<List<ItemResponse>> getAllItems() {
         return ResponseEntity.ok(itemService.getAllItems());
     }
 
     @GetMapping("/{limit}")
-    public ResponseEntity<ResponseWrapper<ItemResponse>> getItemsWithLimit(@PathVariable Integer limit) {
+    public ResponseEntity<List<ItemResponse>> getItemsWithLimit(@PathVariable Integer limit) {
         return ResponseEntity.ok(itemService.getAllItemsWithLimit(limit));
     }
 
     @PostMapping
-    public ResponseEntity<ResponseWrapper<ItemResponse>> createItem(@RequestBody ItemRequest itemRequest) {
-        final ResponseWrapper<ItemResponse> itemResponseResponseWrapper = itemService.insertNewItem(itemRequest);
-        final String errorMessage = itemResponseResponseWrapper.errorMessage();
-
-        return (errorMessage == null || errorMessage.isEmpty()) ?
-                ResponseEntity.ok(itemResponseResponseWrapper) :
-                ResponseEntity.badRequest().body(itemResponseResponseWrapper);
+    public ResponseEntity<ItemResponse> createItem(@RequestBody ItemRequest itemRequest) {
+        return ResponseEntity.ok(itemService.insertNewItem(itemRequest));
     }
 
     @PutMapping("/{itemId}")
-    public ResponseEntity<ResponseWrapper<ItemResponse>> updateItem(@PathVariable Integer itemId, @RequestBody ItemRequest itemRequest) {
-        final ResponseWrapper<ItemResponse> itemResponseResponseWrapper = itemService.updateItem(itemId, itemRequest);
-        final String errorMessage = itemResponseResponseWrapper.errorMessage();
-
-        return (errorMessage == null || errorMessage.isEmpty()) ?
-                ResponseEntity.ok(itemResponseResponseWrapper) :
-                ResponseEntity.badRequest().body(itemResponseResponseWrapper);
-
+    public ResponseEntity<ItemResponse> updateItem(@PathVariable Integer itemId, @RequestBody ItemRequest itemRequest) {
+        return ResponseEntity.ok(itemService.updateItem(itemId, itemRequest));
     }
 
     @DeleteMapping("/{itemId}")
-    public ResponseEntity<ResponseWrapper<ItemResponse>> deleteItem(@PathVariable Integer itemId) {
+    public ResponseEntity<Boolean> deleteItem(@PathVariable Integer itemId) {
         return ResponseEntity.ok(itemService.deleteItem(itemId));
     }
 }
