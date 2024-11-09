@@ -2,6 +2,7 @@ package com.selected.inventory_dashboard.service.interfaces;
 
 import com.selected.inventory_dashboard.dtovo.req.ItemRequest;
 import com.selected.inventory_dashboard.dtovo.res.ItemResponse;
+import com.selected.inventory_dashboard.dtovo.res.ReorderResponseWrapper;
 
 import java.util.List;
 
@@ -11,4 +12,5 @@ public interface ItemService {
     ItemResponse insertNewItem(ItemRequest itemRequest);
     ItemResponse updateItem(Integer itemId, ItemRequest itemRequest);
     boolean deleteItem(Integer itemId);
+    ReorderResponseWrapper reorderItemsLowStockItems();
 }
