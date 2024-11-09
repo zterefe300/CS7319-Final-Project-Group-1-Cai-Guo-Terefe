@@ -15,7 +15,9 @@ import com.selected.inventory_dashboard.persistence.dao.VendorMapper;
 import com.selected.inventory_dashboard.persistence.entity.Item;
 import com.selected.inventory_dashboard.persistence.entity.StockRecord;
 import com.selected.inventory_dashboard.persistence.entity.Vendor;
+import com.selected.inventory_dashboard.service.interfaces.EmailService;
 import com.selected.inventory_dashboard.service.interfaces.ItemService;
+import com.selected.inventory_dashboard.service.interfaces.SMSService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -35,12 +37,17 @@ public class ItemServiceImpl implements ItemService {
     private final StockRecordMapper stockRecordMapper;
     private final VendorMapper vendorMapper;
     private final FileUploaderServiceCoordinator fileUploaderServiceCoordinator;
+    private final EmailService emailService;
+    private final SMSService smsService;
 
-    public ItemServiceImpl(final ItemMapper itemMapper, final StockRecordMapper stockRecordMapper, final VendorMapper vendorMapper, final FileUploaderServiceCoordinator fileUploaderServiceCoordinator) {
+    public ItemServiceImpl(final ItemMapper itemMapper, final StockRecordMapper stockRecordMapper, final VendorMapper vendorMapper, final FileUploaderServiceCoordinator fileUploaderServiceCoordinator,
+                           final EmailService emailService, final SMSService smsService) {
         this.itemMapper = itemMapper;
         this.stockRecordMapper = stockRecordMapper;
         this.vendorMapper = vendorMapper;
         this.fileUploaderServiceCoordinator = fileUploaderServiceCoordinator;
+        this.emailService = emailService;
+        this.smsService = smsService;
     }
 
     @Override
@@ -170,12 +177,16 @@ public class ItemServiceImpl implements ItemService {
             final Vendor vendor = vendorMapper.selectByPrimaryKey(item.getVendorId());
 
             try {
-                if (vendor.getEmail() != null && vendor.getPhone() != null) {
-                    //send email and text message
-                } else if (vendor.getEmail() != null) {
-                    //send email
-                } else if (vendor.getPhone() != null) {
-                    //send text message
+                if (vendor.getEmail() != null) {
+                    //TODO: update reorder quantity once we have default reorder quantity setup at the db level
+                    emailService.sendEmail(vendor.getEmail(), String.format("Item: %s, reorder", item.getName()),
+                            NotificationServiceHelper.createItemReorderEmailBody(vendor.getName(), item.getName(), 5));
+                }
+
+                if (vendor.getPhone() != null) {
+                    //TODO: update reorder quantity once we have default reorder quantity setup at the db level
+                    smsService.sendSMS(vendor.getPhone(),
+                            NotificationServiceHelper.createItemReorderSMSBody(item.getName(), 5));
                 }
                 successfullyReorderedItems.add(new ItemReorderResponse(item.getId(), item.getVendorId(), ReorderStatus.REORDERED, ""));
             } catch (Exception e) {
