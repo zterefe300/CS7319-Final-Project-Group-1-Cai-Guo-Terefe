@@ -18,6 +18,7 @@ import com.selected.inventory_dashboard.persistence.entity.Vendor;
 import com.selected.inventory_dashboard.service.interfaces.ItemService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -155,6 +156,8 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
+    @Scheduled(cron = "0 0 2 * * ?")
+    //TODO: Update cron to drive its value from application properties
     public ReorderResponseWrapper reorderItemsLowStockItems() {
         final List<ItemReorderResponse> successfullyReorderedItems = new ArrayList<>();
         final List<ItemReorderResponse> itemsFailedToReorder = new ArrayList<>();
