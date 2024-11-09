@@ -1,8 +1,11 @@
 package com.selected.inventory_dashboard.service.impl;
 
+import com.selected.inventory_dashboard.constants.ReorderStatus;
 import com.selected.inventory_dashboard.dtovo.req.ItemRequest;
 import com.selected.inventory_dashboard.dtovo.req.VendorRequest;
+import com.selected.inventory_dashboard.dtovo.res.ItemReorderResponse;
 import com.selected.inventory_dashboard.dtovo.res.ItemResponse;
+import com.selected.inventory_dashboard.dtovo.res.ReorderResponseWrapper;
 import com.selected.inventory_dashboard.exception.AlarmThresholdException;
 import com.selected.inventory_dashboard.exception.NoItemDataException;
 import com.selected.inventory_dashboard.exception.NoVendorDataException;
@@ -11,6 +14,7 @@ import com.selected.inventory_dashboard.persistence.dao.StockRecordMapper;
 import com.selected.inventory_dashboard.persistence.dao.VendorMapper;
 import com.selected.inventory_dashboard.persistence.entity.Item;
 import com.selected.inventory_dashboard.persistence.entity.StockRecord;
+import com.selected.inventory_dashboard.persistence.entity.Vendor;
 import com.selected.inventory_dashboard.service.interfaces.ItemService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -40,28 +45,12 @@ public class ItemServiceImpl implements ItemService {
     @Override
     public List<ItemResponse> getAllItems() {
         //TODO: update this once we have  a join query between item and stock record
-        return itemMapper.selectAll().stream().map(item -> new ItemResponse(
-                item.getId(),
-                item.getName(),
-                item.getDetail(),
-                item.getPics(),
-                stockRecordMapper.selectByPrimaryKey(item.getId()).getQuantity(),
-                item.getAlarmThreshold(),
-                item.getQuantityThreshold()
-        )).toList();
+        return itemMapper.selectAll().stream().map(this::joinItemAndStockRecord).toList();
     }
 
     @Override
     public List<ItemResponse> getAllItemsWithLimit(final Integer limit) {
-        return itemMapper.selectLimit(limit).stream().map(item -> new ItemResponse(
-                item.getId(),
-                item.getName(),
-                item.getDetail(),
-                item.getPics(),
-                stockRecordMapper.selectByPrimaryKey(item.getId()).getQuantity(),
-                item.getAlarmThreshold(),
-                item.getQuantityThreshold()
-        )).toList();
+        return itemMapper.selectLimit(limit).stream().map(this::joinItemAndStockRecord).toList();
     }
 
     ///TODO: Breakdown service into methods. Add error handling for insert operations
@@ -163,6 +152,48 @@ public class ItemServiceImpl implements ItemService {
     public boolean deleteItem(final Integer itemId) {
         itemMapper.deleteByPrimaryKey(itemId);
         return itemMapper.selectByPrimaryKey(itemId) == null;
+    }
+
+    @Override
+    public ReorderResponseWrapper reorderItemsLowStockItems() {
+        final List<ItemReorderResponse> successfullyReorderedItems = new ArrayList<>();
+        final List<ItemReorderResponse> itemsFailedToReorder = new ArrayList<>();
+
+        final List<Item> lowStockItems = itemMapper.selectAll().stream().filter(
+                item -> stockRecordMapper
+                        .selectByPrimaryKey(item.getId()).getQuantity() < item.getQuantityThreshold()).toList();
+
+        lowStockItems.forEach(item -> {
+            final Vendor vendor = vendorMapper.selectByPrimaryKey(item.getVendorId());
+
+            try {
+                if (vendor.getEmail() != null && vendor.getPhone() != null) {
+                    //send email and text message
+                } else if (vendor.getEmail() != null) {
+                    //send email
+                } else if (vendor.getPhone() != null) {
+                    //send text message
+                }
+                successfullyReorderedItems.add(new ItemReorderResponse(item.getId(), item.getVendorId(), ReorderStatus.REORDERED, ""));
+            } catch (Exception e) {
+                itemsFailedToReorder.add(new
+                        ItemReorderResponse(item.getId(), item.getVendorId(), ReorderStatus.FAILED, e.getMessage()));
+            }
+        });
+
+        return new ReorderResponseWrapper(successfullyReorderedItems, itemsFailedToReorder);
+    }
+
+    private ItemResponse joinItemAndStockRecord(final Item item) {
+        return  new ItemResponse(
+                item.getId(),
+                item.getName(),
+                item.getDetail(),
+                item.getPics(),
+                stockRecordMapper.selectByPrimaryKey(item.getId()).getQuantity(),
+                item.getAlarmThreshold(),
+                item.getQuantityThreshold()
+        );
     }
 
     private String insertOrUpdatePictureAndGetUrl(final MultipartFile pictureFile) {
