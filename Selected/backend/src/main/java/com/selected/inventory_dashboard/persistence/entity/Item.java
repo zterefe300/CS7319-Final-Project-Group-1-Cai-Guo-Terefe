@@ -31,5 +31,7 @@ public class Item {
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "UTC")
     private Date effectiveDate;
 
+    private Integer reorderQuantity;
+
 
 }

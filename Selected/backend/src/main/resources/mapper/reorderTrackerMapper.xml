@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.selected.inventory_dashboard.persistence.dao.reorderTrackerMapper">
+  <resultMap id="BaseResultMap" type="com.selected.inventory_dashboard.persistence.entity.reorderTracker">
+    <id column="item_id" jdbcType="INTEGER" property="itemId" />
+    <id column="status" jdbcType="INTEGER" property="status" />
+    <id column="date" jdbcType="INTEGER" property="date" />
+    <result column="vendor_id" jdbcType="INTEGER" property="vendorId" />
+    <result column="error_message" jdbcType="VARCHAR" property="errorMessage" />
+  </resultMap>
+  <delete id="deleteByPrimaryKey" parameterType="map">
+    delete from reorder_tracker
+    where item_id = #{itemId,jdbcType=INTEGER}
+      and status = #{status,jdbcType=INTEGER}
+      and date = #{date,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.selected.inventory_dashboard.persistence.entity.reorderTracker">
+    insert into reorder_tracker (item_id, status, date, 
+      vendor_id, error_message)
+    values (#{itemId,jdbcType=INTEGER}, #{status,jdbcType=INTEGER}, #{date,jdbcType=INTEGER}, 
+      #{vendorId,jdbcType=INTEGER}, #{errorMessage,jdbcType=VARCHAR})
+  </insert>
+  <update id="updateByPrimaryKey" parameterType="com.selected.inventory_dashboard.persistence.entity.reorderTracker">
+    update reorder_tracker
+    set vendor_id = #{vendorId,jdbcType=INTEGER},
+      error_message = #{errorMessage,jdbcType=VARCHAR}
+    where item_id = #{itemId,jdbcType=INTEGER}
+      and status = #{status,jdbcType=INTEGER}
+      and date = #{date,jdbcType=INTEGER}
+  </update>
+  <select id="selectByPrimaryKey" parameterType="map" resultMap="BaseResultMap">
+    select item_id, status, date, vendor_id, error_message
+    from reorder_tracker
+    where item_id = #{itemId,jdbcType=INTEGER}
+      and status = #{status,jdbcType=INTEGER}
+      and date = #{date,jdbcType=INTEGER}
+  </select>
+  <select id="selectAll" resultMap="BaseResultMap">
+    select item_id, status, date, vendor_id, error_message
+    from reorder_tracker
+  </select>
+</mapper>

@@ -1,5 +1,6 @@
 package com.selected.inventory_dashboard.persistence.dao;
 
+import com.selected.inventory_dashboard.dtovo.res.ItemAndQty;
 import com.selected.inventory_dashboard.persistence.entity.Item;
 import java.util.List;
 
@@ -15,4 +16,5 @@ public interface ItemMapper {
     int updateByPrimaryKey(Item record);
 
     List<Item> selectLimit(int limit);
+    List<ItemAndQty> findAllBelowQtyThreshold();
 }
