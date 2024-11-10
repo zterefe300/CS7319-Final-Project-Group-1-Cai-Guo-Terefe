@@ -20,7 +20,7 @@ public class Dao {
 
     //----------------------------------Item------------------------------------------------------------------------------
 
-    public void createItem(Item item) throws SQLException {
+    public void createItem(Item item){
         String sql = "INSERT INTO item (name, detail, pics, alarm_threshold, quantity_threshold, vendor_id, effective_date,reorder_quantity) VALUES (?, ?, ?, ?, ?, ?, ?,?)";
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -34,10 +34,12 @@ public class Dao {
             stmt.setTimestamp(7, new Timestamp(item.getEffectiveDate().getTime()));
             stmt.setInt(8,item.getReorderQuantity());
             stmt.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
         }
     }
 
-    public Item getItem(int id) throws SQLException {
+    public Item getItem(int id){
         String sql = "SELECT * FROM item WHERE id = ?";
         Item item = null;
         try (Connection conn = DBUtil.getConnection();
@@ -58,11 +60,13 @@ public class Dao {
                     item.setReorderQuantity(rs.getInt("reorder_quantity"));
                 }
             }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
         }
         return item;
     }
 
-    public void updateItem(Item item) throws SQLException {
+    public void updateItem(Item item){
         String sql = "UPDATE item SET name = ?, detail = ?, pics = ?, alarm_threshold = ?, quantity_threshold = ?, vendor_id = ?, effective_date = ?, reorder_quantity=? WHERE id = ?";
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -78,20 +82,24 @@ public class Dao {
             stmt.setInt(9, item.getId());
 
             stmt.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
         }
     }
 
-    public void deleteItem(int id) throws SQLException {
+    public void deleteItem(int id){
         String sql = "DELETE FROM item WHERE id = ?";
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setInt(1, id);
             stmt.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
         }
     }
 
-    public List<Item> getAllItems() throws SQLException {
+    public List<Item> getAllItems(){
         String sql = "SELECT * FROM item";
         List<Item> items = new ArrayList<>();
 
@@ -113,11 +121,13 @@ public class Dao {
 
                 items.add(item);
             }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
         }
         return items;
     }
 
-    public List<Item> selectLimit(int limit) throws SQLException {
+    public List<Item> selectLimit(int limit) {
         String sql = "SELECT * FROM item limit ?";
         List<Item> items = new ArrayList<>();
 
@@ -140,6 +150,8 @@ public class Dao {
 
                 items.add(item);
             }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
         }
         return items;
     }
@@ -178,7 +190,7 @@ public class Dao {
     //----------------------------------StockRecord------------------------------------------------------------------------------
 
 
-    public void createStockRecord(StockRecord stockRecord) throws SQLException {
+    public void createStockRecord(StockRecord stockRecord){
         String sql = "INSERT INTO stock_record (item_id, quantity, operator, effective_date) VALUES (?, ?, ?, ?)";
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -188,10 +200,12 @@ public class Dao {
             stmt.setString(3, stockRecord.getOperator());
             stmt.setTimestamp(4, new Timestamp(stockRecord.getEffectiveDate().getTime()));
             stmt.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
         }
     }
 
-    public StockRecord getStockRecord(int id) throws SQLException {
+    public StockRecord getStockRecord(int id) {
         String sql = "SELECT * FROM stock_record WHERE id = ?";
         StockRecord stockRecord = null;
         try (Connection conn = DBUtil.getConnection();
@@ -208,11 +222,13 @@ public class Dao {
                     stockRecord.setEffectiveDate(rs.getTimestamp("effective_date"));
                 }
             }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
         }
         return stockRecord;
     }
 
-    public void updateStockRecord(StockRecord stockRecord) throws SQLException {
+    public void updateStockRecord(StockRecord stockRecord){
         String sql = "UPDATE stock_record SET item_id = ?, quantity = ?, operator = ?, effective_date = ? WHERE id = ?";
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -223,20 +239,24 @@ public class Dao {
             stmt.setTimestamp(4, new Timestamp(stockRecord.getEffectiveDate().getTime()));
             stmt.setInt(5, stockRecord.getId());
             stmt.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
         }
     }
 
-    public void deleteStockRecord(int id) throws SQLException {
+    public void deleteStockRecord(int id) {
         String sql = "DELETE FROM stock_record WHERE id = ?";
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setInt(1, id);
             stmt.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
         }
     }
 
-    public List<StockRecord> getAllStockRecords() throws SQLException {
+    public List<StockRecord> getAllStockRecords() {
         String sql = "SELECT * FROM stock_record";
         List<StockRecord> stockRecords = new ArrayList<>();
 
@@ -254,11 +274,13 @@ public class Dao {
 
                 stockRecords.add(stockRecord);
             }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
         }
         return stockRecords;
     }
 
-    public List<StockRecord> findByItemId(int itemId) throws SQLException {
+    public List<StockRecord> findByItemId(int itemId) {
         String sql = "SELECT * FROM stock_record where item_id=?";
         List<StockRecord> stockRecords = new ArrayList<>();
 
@@ -278,6 +300,8 @@ public class Dao {
 
                 stockRecords.add(stockRecord);
             }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
         }
         return stockRecords;
     }
@@ -287,7 +311,7 @@ public class Dao {
     //----------------------------------User------------------------------------------------------------------------------
 
 
-    public void createUser(User user) throws SQLException {
+    public void createUser(User user) {
         String sql = "INSERT INTO user (user_name, password, first_name, last_name, role_type, create_time, update_time) VALUES (?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -300,10 +324,12 @@ public class Dao {
             stmt.setTimestamp(6, new Timestamp(user.getCreateTime().getTime()));
             stmt.setTimestamp(7, new Timestamp(user.getUpdateTime().getTime()));
             stmt.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
         }
     }
 
-    public User getUser(int id) throws SQLException {
+    public User getUser(int id){
         String sql = "SELECT * FROM user WHERE id = ?";
         User user = null;
         try (Connection conn = DBUtil.getConnection();
@@ -323,11 +349,13 @@ public class Dao {
                     user.setUpdateTime(rs.getTimestamp("update_time"));
                 }
             }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
         }
         return user;
     }
 
-    public void updateUser(User user) throws SQLException {
+    public void updateUser(User user) {
         String sql = "UPDATE user SET user_name = ?, password = ?, first_name = ?, last_name = ?, role_type = ?, update_time = ? WHERE id = ?";
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -340,20 +368,24 @@ public class Dao {
             stmt.setTimestamp(6, new Timestamp(user.getUpdateTime().getTime()));
             stmt.setInt(7, user.getId());
             stmt.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
         }
     }
 
-    public void deleteUser(int id) throws SQLException {
+    public void deleteUser(int id) {
         String sql = "DELETE FROM user WHERE id = ?";
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setInt(1, id);
             stmt.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
         }
     }
 
-    public List<User> getAllUsers() throws SQLException {
+    public List<User> getAllUsers() {
         String sql = "SELECT * FROM user";
         List<User> users = new ArrayList<>();
 
@@ -374,11 +406,13 @@ public class Dao {
 
                 users.add(user);
             }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
         }
         return users;
     }
 
-    public User selectByUserName(String userName) throws SQLException {
+    public User selectByUserName(String userName) {
         String sql = "SELECT * FROM user WHERE user_name = ?";
         User user = null;
         try (Connection conn = DBUtil.getConnection();
@@ -398,6 +432,8 @@ public class Dao {
                     user.setUpdateTime(rs.getTimestamp("update_time"));
                 }
             }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
         }
         return user;
     }
@@ -406,7 +442,7 @@ public class Dao {
 
     //----------------------------------vendor------------------------------------------------------------------------------
 
-    public void createVendor(Vendor vendor) throws SQLException {
+    public void createVendor(Vendor vendor) {
         String sql = "INSERT INTO vendor (name, email, phone) VALUES (?, ?, ?)";
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -415,10 +451,12 @@ public class Dao {
             stmt.setString(2, vendor.getEmail());
             stmt.setString(3, vendor.getPhone());
             stmt.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
         }
     }
 
-    public Vendor getVendor(int id) throws SQLException {
+    public Vendor getVendor(int id) {
         String sql = "SELECT * FROM vendor WHERE id = ?";
         Vendor vendor = null;
         try (Connection conn = DBUtil.getConnection();
@@ -436,11 +474,13 @@ public class Dao {
                     vendor.setUpdateTime(rs.getTimestamp("update_time"));
                 }
             }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
         }
         return vendor;
     }
 
-    public void updateVendor(Vendor vendor) throws SQLException {
+    public void updateVendor(Vendor vendor) {
         String sql = "UPDATE vendor SET name = ?, email = ?, phone = ? WHERE id = ?";
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -450,20 +490,24 @@ public class Dao {
             stmt.setString(3, vendor.getPhone());
             stmt.setInt(4, vendor.getId());
             stmt.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
         }
     }
 
-    public void deleteVendor(int id) throws SQLException {
+    public void deleteVendor(int id) {
         String sql = "DELETE FROM vendor WHERE id = ?";
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setInt(1, id);
             stmt.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
         }
     }
 
-    public List<Vendor> getAllVendors() throws SQLException {
+    public List<Vendor> getAllVendors()  {
         String sql = "SELECT * FROM vendor";
         List<Vendor> vendors = new ArrayList<>();
 
@@ -482,13 +526,15 @@ public class Dao {
 
                 vendors.add(vendor);
             }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
         }
         return vendors;
     }
 
     //----------------------------------ReorderTracker------------------------------------------------------------------------------
 
-    public void createReorderTracker(ReorderTracker reorderTracker) throws SQLException {
+    public void createReorderTracker(ReorderTracker reorderTracker) {
         String sql = "INSERT INTO reorder_tracker (item_id, status, date, vendor_id, error_message) VALUES (?, ?, ?, ?, ?)";
 
         try (Connection conn = DBUtil.getConnection();
@@ -501,11 +547,13 @@ public class Dao {
             stmt.setString(5, reorderTracker.getErrorMessage());
 
             stmt.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
         }
     }
 
     // Retrieve a reorder tracker entry by item ID
-    public ReorderTracker getReorderTracker(int itemId) throws SQLException {
+    public ReorderTracker getReorderTracker(int itemId) {
         String sql = "SELECT * FROM reorder_tracker WHERE item_id = ?";
         ReorderTracker reorderTracker = null;
 
@@ -523,12 +571,14 @@ public class Dao {
                     reorderTracker.setErrorMessage(rs.getString("error_message"));
                 }
             }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
         }
         return reorderTracker;
     }
 
     // Update a reorder tracker entry
-    public void updateReorderTracker(ReorderTracker reorderTracker) throws SQLException {
+    public void updateReorderTracker(ReorderTracker reorderTracker) {
         String sql = "UPDATE reorder_tracker SET status = ?, date = ?, vendor_id = ?, error_message = ? WHERE item_id = ?";
 
         try (Connection conn = DBUtil.getConnection();
@@ -541,11 +591,13 @@ public class Dao {
             stmt.setInt(5, reorderTracker.getItemId());
 
             stmt.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
         }
     }
 
     // Delete a reorder tracker entry by item ID
-    public void deleteReorderTracker(int itemId) throws SQLException {
+    public void deleteReorderTracker(int itemId) {
         String sql = "DELETE FROM reorder_tracker WHERE item_id = ?";
 
         try (Connection conn = DBUtil.getConnection();
@@ -553,11 +605,13 @@ public class Dao {
 
             stmt.setInt(1, itemId);
             stmt.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
         }
     }
 
     // Retrieve all reorder tracker entries
-    public List<ReorderTracker> getAllReorderTrackers() throws SQLException {
+    public List<ReorderTracker> getAllReorderTrackers() {
         String sql = "SELECT * FROM reorder_tracker";
         List<ReorderTracker> reorderTrackers = new ArrayList<>();
 
@@ -575,6 +629,8 @@ public class Dao {
 
                 reorderTrackers.add(reorderTracker);
             }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
         }
         return reorderTrackers;
     }
