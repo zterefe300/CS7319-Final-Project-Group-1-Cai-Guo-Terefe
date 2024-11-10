@@ -23,12 +23,7 @@ public class MyUserDetailsService implements UserDetailsService {
     private Dao dao;
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        User user = null;
-        try {
-            user = dao.selectByUserName(username);
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
+        User user = user = dao.selectByUserName(username);
         if (user==null){
             throw new UsernameNotFoundException("user does not exist");
         }
