@@ -8,7 +8,6 @@ CREATE TABLE `reorder_tracker` (
                         `item_id` int NOT NULL,
                         `vendor_id` int NOT NULL,
                         `status` int NOT NULL,
-                        `date` int NOT NULL,
                         `error_message` varchar(255) DEFAULT NULL,
                         `date` datetime DEFAULT NULL,
                         PRIMARY KEY (`item_id`,`status`,`date`)
