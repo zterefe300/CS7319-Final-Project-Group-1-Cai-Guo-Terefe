@@ -1,9 +1,7 @@
 package com.inventory_dashboard.u_backend.db;
 
-import com.inventory_dashboard.u_backend.entity.Item;
-import com.inventory_dashboard.u_backend.entity.StockRecord;
-import com.inventory_dashboard.u_backend.entity.User;
-import com.inventory_dashboard.u_backend.entity.Vendor;
+import com.inventory_dashboard.u_backend.dto.ItemAndQty;
+import com.inventory_dashboard.u_backend.entity.*;
 import org.springframework.stereotype.Repository;
 
 import java.sql.*;
@@ -23,7 +21,7 @@ public class Dao {
     //----------------------------------Item------------------------------------------------------------------------------
 
     public void createItem(Item item) throws SQLException {
-        String sql = "INSERT INTO item (name, detail, pics, alarm_threshold, quantity_threshold, vendor_id, effective_date) VALUES (?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO item (name, detail, pics, alarm_threshold, quantity_threshold, vendor_id, effective_date,reorder_quantity) VALUES (?, ?, ?, ?, ?, ?, ?,?)";
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
@@ -34,6 +32,7 @@ public class Dao {
             stmt.setInt(5, item.getQuantityThreshold());
             stmt.setInt(6, item.getVendorId());
             stmt.setTimestamp(7, new Timestamp(item.getEffectiveDate().getTime()));
+            stmt.setInt(8,item.getReorderQuantity());
             stmt.executeUpdate();
         }
     }
@@ -56,6 +55,7 @@ public class Dao {
                     item.setQuantityThreshold(rs.getInt("quantity_threshold"));
                     item.setVendorId(rs.getInt("vendor_id"));
                     item.setEffectiveDate(rs.getTimestamp("effective_date"));
+                    item.setReorderQuantity(rs.getInt("reorder_quantity"));
                 }
             }
         }
@@ -63,7 +63,7 @@ public class Dao {
     }
 
     public void updateItem(Item item) throws SQLException {
-        String sql = "UPDATE item SET name = ?, detail = ?, pics = ?, alarm_threshold = ?, quantity_threshold = ?, vendor_id = ?, effective_date = ? WHERE id = ?";
+        String sql = "UPDATE item SET name = ?, detail = ?, pics = ?, alarm_threshold = ?, quantity_threshold = ?, vendor_id = ?, effective_date = ?, reorder_quantity=? WHERE id = ?";
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
@@ -74,7 +74,9 @@ public class Dao {
             stmt.setInt(5, item.getQuantityThreshold());
             stmt.setInt(6, item.getVendorId());
             stmt.setTimestamp(7, new Timestamp(item.getEffectiveDate().getTime()));
-            stmt.setInt(8, item.getId());
+            stmt.setInt(8,item.getReorderQuantity());
+            stmt.setInt(9, item.getId());
+
             stmt.executeUpdate();
         }
     }
@@ -107,9 +109,67 @@ public class Dao {
                 item.setQuantityThreshold(rs.getInt("quantity_threshold"));
                 item.setVendorId(rs.getInt("vendor_id"));
                 item.setEffectiveDate(rs.getTimestamp("effective_date"));
+                item.setReorderQuantity(rs.getInt("reorder_quantity"));
 
                 items.add(item);
             }
+        }
+        return items;
+    }
+
+    public List<Item> selectLimit(int limit) throws SQLException {
+        String sql = "SELECT * FROM item limit ?";
+        List<Item> items = new ArrayList<>();
+
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, limit);
+             ResultSet rs = stmt.executeQuery();
+
+            while (rs.next()) {
+                Item item = new Item();
+                item.setId(rs.getInt("id"));
+                item.setName(rs.getString("name"));
+                item.setDetail(rs.getString("detail"));
+                item.setPics(rs.getString("pics"));
+                item.setAlarmThreshold(rs.getInt("alarm_threshold"));
+                item.setQuantityThreshold(rs.getInt("quantity_threshold"));
+                item.setVendorId(rs.getInt("vendor_id"));
+                item.setEffectiveDate(rs.getTimestamp("effective_date"));
+                item.setReorderQuantity(rs.getInt("reorder_quantity"));
+
+                items.add(item);
+            }
+        }
+        return items;
+    }
+
+    public List<ItemAndQty> findAllBelowQtyThreshold(){
+        String sql = "select item.*,stock_record.quantity from item left join stock_record on item.id=stock_record.item_id\n" +
+                "    where stock_record.quantity < item.quantity_threshold ";
+        List<ItemAndQty> items = new ArrayList<>();
+
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+
+            while (rs.next()) {
+                ItemAndQty item = new ItemAndQty();
+                item.setId(rs.getInt("id"));
+                item.setName(rs.getString("name"));
+                item.setDetail(rs.getString("detail"));
+                item.setPics(rs.getString("pics"));
+                item.setAlarmThreshold(rs.getInt("alarm_threshold"));
+                item.setQuantityThreshold(rs.getInt("quantity_threshold"));
+                item.setVendorId(rs.getInt("vendor_id"));
+                item.setEffectiveDate(rs.getTimestamp("effective_date"));
+                item.setReorderQuantity(rs.getInt("reorder_quantity"));
+                item.setQuantity(rs.getInt("quantity"));
+
+                items.add(item);
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
         }
         return items;
     }
@@ -183,6 +243,30 @@ public class Dao {
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql);
              ResultSet rs = stmt.executeQuery()) {
+
+            while (rs.next()) {
+                StockRecord stockRecord = new StockRecord();
+                stockRecord.setId(rs.getInt("id"));
+                stockRecord.setItemId(rs.getInt("item_id"));
+                stockRecord.setQuantity(rs.getInt("quantity"));
+                stockRecord.setOperator(rs.getString("operator"));
+                stockRecord.setEffectiveDate(rs.getTimestamp("effective_date"));
+
+                stockRecords.add(stockRecord);
+            }
+        }
+        return stockRecords;
+    }
+
+    public List<StockRecord> findByItemId(int itemId) throws SQLException {
+        String sql = "SELECT * FROM stock_record where item_id=?";
+        List<StockRecord> stockRecords = new ArrayList<>();
+
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ) {
+            stmt.setInt(1,itemId);
+            ResultSet rs = stmt.executeQuery();
 
             while (rs.next()) {
                 StockRecord stockRecord = new StockRecord();
@@ -401,4 +485,98 @@ public class Dao {
         }
         return vendors;
     }
+
+    //----------------------------------ReorderTracker------------------------------------------------------------------------------
+
+    public void createReorderTracker(ReorderTracker reorderTracker) throws SQLException {
+        String sql = "INSERT INTO reorder_tracker (item_id, status, date, vendor_id, error_message) VALUES (?, ?, ?, ?, ?)";
+
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, reorderTracker.getItemId());
+            stmt.setInt(2, reorderTracker.getStatus());
+            stmt.setTimestamp(3, new Timestamp(reorderTracker.getDate().getTime()));
+            stmt.setInt(4, reorderTracker.getVendorId());
+            stmt.setString(5, reorderTracker.getErrorMessage());
+
+            stmt.executeUpdate();
+        }
+    }
+
+    // Retrieve a reorder tracker entry by item ID
+    public ReorderTracker getReorderTracker(int itemId) throws SQLException {
+        String sql = "SELECT * FROM reorder_tracker WHERE item_id = ?";
+        ReorderTracker reorderTracker = null;
+
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, itemId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    reorderTracker = new ReorderTracker();
+                    reorderTracker.setItemId(rs.getInt("item_id"));
+                    reorderTracker.setStatus(rs.getInt("status"));
+                    reorderTracker.setDate(rs.getTimestamp("date"));
+                    reorderTracker.setVendorId(rs.getInt("vendor_id"));
+                    reorderTracker.setErrorMessage(rs.getString("error_message"));
+                }
+            }
+        }
+        return reorderTracker;
+    }
+
+    // Update a reorder tracker entry
+    public void updateReorderTracker(ReorderTracker reorderTracker) throws SQLException {
+        String sql = "UPDATE reorder_tracker SET status = ?, date = ?, vendor_id = ?, error_message = ? WHERE item_id = ?";
+
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, reorderTracker.getStatus());
+            stmt.setTimestamp(2, new Timestamp(reorderTracker.getDate().getTime()));
+            stmt.setInt(3, reorderTracker.getVendorId());
+            stmt.setString(4, reorderTracker.getErrorMessage());
+            stmt.setInt(5, reorderTracker.getItemId());
+
+            stmt.executeUpdate();
+        }
+    }
+
+    // Delete a reorder tracker entry by item ID
+    public void deleteReorderTracker(int itemId) throws SQLException {
+        String sql = "DELETE FROM reorder_tracker WHERE item_id = ?";
+
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, itemId);
+            stmt.executeUpdate();
+        }
+    }
+
+    // Retrieve all reorder tracker entries
+    public List<ReorderTracker> getAllReorderTrackers() throws SQLException {
+        String sql = "SELECT * FROM reorder_tracker";
+        List<ReorderTracker> reorderTrackers = new ArrayList<>();
+
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+
+            while (rs.next()) {
+                ReorderTracker reorderTracker = new ReorderTracker();
+                reorderTracker.setItemId(rs.getInt("item_id"));
+                reorderTracker.setStatus(rs.getInt("status"));
+                reorderTracker.setDate(rs.getTimestamp("date"));
+                reorderTracker.setVendorId(rs.getInt("vendor_id"));
+                reorderTracker.setErrorMessage(rs.getString("error_message"));
+
+                reorderTrackers.add(reorderTracker);
+            }
+        }
+        return reorderTrackers;
+    }
+
 }
