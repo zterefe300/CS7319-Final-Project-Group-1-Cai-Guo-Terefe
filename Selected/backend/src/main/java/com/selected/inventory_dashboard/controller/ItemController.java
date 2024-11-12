@@ -2,7 +2,7 @@ package com.selected.inventory_dashboard.controller;
 
 import com.selected.inventory_dashboard.dtovo.req.ItemRequest;
 import com.selected.inventory_dashboard.dtovo.res.ItemResponse;
-import com.selected.inventory_dashboard.dtovo.res.ReorderResponseWrapper;
+import com.selected.inventory_dashboard.dtovo.res.ReorderTrackerResponseWrapper;
 import com.selected.inventory_dashboard.service.interfaces.ItemService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -50,7 +50,7 @@ public class ItemController {
     }
 
     @PutMapping("/reorder")
-    public ResponseEntity<ReorderResponseWrapper> reorderLowStockItems() {
+    public ResponseEntity<ReorderTrackerResponseWrapper> reorderLowStockItems() {
         return ResponseEntity.ok(itemService.reorderItemsLowStockItems());
     }
 }
