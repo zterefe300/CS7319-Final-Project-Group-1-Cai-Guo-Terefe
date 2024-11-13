@@ -17,6 +17,26 @@ public class GlobalExceptionHandler {
         return badRequestResponseHandler(e);
     }
 
+    @ExceptionHandler(NoItemDataException.class)
+    public ResponseEntity<ErrorResponse> handleNoItemDataException(NoItemDataException e) {
+        return badRequestResponseHandler(e);
+    }
+
+    @ExceptionHandler(PictureFileUploadException.class)
+    public ResponseEntity<ErrorResponse> handlePictureFileUploadException(PictureFileUploadException e) {
+        return badRequestResponseHandler(e);
+    }
+
+    @ExceptionHandler(VendorContactInfoException.class)
+    public ResponseEntity<ErrorResponse> handleVendorContactInfoException(VendorContactInfoException e) {
+        return badRequestResponseHandler(e);
+    }
+
+    @ExceptionHandler(VendorNameException.class)
+    public ResponseEntity<ErrorResponse> handleVendorNameException(VendorNameException e) {
+        return badRequestResponseHandler(e);
+    }
+
     private ResponseEntity<ErrorResponse> badRequestResponseHandler(RuntimeException e) {
         return ResponseEntity.badRequest().body(new ErrorResponse(e.getMessage()));
     }

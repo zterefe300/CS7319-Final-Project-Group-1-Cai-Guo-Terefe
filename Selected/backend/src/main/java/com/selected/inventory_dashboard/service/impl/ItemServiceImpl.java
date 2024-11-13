@@ -74,15 +74,15 @@ public class ItemServiceImpl implements ItemService {
            throw new AlarmThresholdException();
         }
 
-        final VendorRequest vendorRequest = itemRequest.vendor();
+        final Integer vendorId = itemRequest.vendorId();
 
         //Throw default no vendor data exception, if vendor data is not provided as part if the request
-        if (vendorRequest == null || vendorRequest.vendorId() == null) {
+        if (vendorId == null) {
             throw new NoVendorDataException();
         }
 
         //Throw no vendor data found, when a vendor id is provided but the vendor doesn't exist in the db
-        if (vendorMapper.selectByPrimaryKey(vendorRequest.vendorId()) == null) {
+        if (vendorMapper.selectByPrimaryKey(vendorId) == null) {
             throw NoVendorDataException.vendorNotFoundException();
         }
 
@@ -96,7 +96,7 @@ public class ItemServiceImpl implements ItemService {
                 .pics(itemPicturesRootUrl)
                 .alarmThreshold(itemRequest.quantityAlarmThreshold())
                 .quantityThreshold(itemRequest.quantityReorderThreshold())
-                .vendorId(itemRequest.vendor().vendorId()).effectiveDate(Date.from(Instant.now())).build());
+                .vendorId(vendorId).effectiveDate(Date.from(Instant.now())).build());
 
         final Item item = itemMapper.selectByPrimaryKey(itemId);
 
@@ -107,7 +107,8 @@ public class ItemServiceImpl implements ItemService {
 
         return new ItemResponse(
                 itemId, item.getName(), item.getDetail(), item.getPics(), stockRecord.getQuantity(),
-                item.getAlarmThreshold(), item.getQuantityThreshold()
+                item.getAlarmThreshold(), item.getQuantityThreshold(),
+                item.getVendorId()
         );
     }
 
@@ -123,9 +124,13 @@ public class ItemServiceImpl implements ItemService {
             throw new NoItemDataException();
         }
 
-        final VendorRequest vendorRequest = itemRequest.vendor();
+        final Integer vendorId = itemRequest.vendorId();
 
-        if (vendorRequest != null && vendorMapper.selectByPrimaryKey(vendorRequest.vendorId()) == null) {
+        if (vendorId == null) {
+            throw new NoVendorDataException();
+        }
+
+        if (vendorMapper.selectByPrimaryKey(vendorId) == null) {
             throw NoVendorDataException.vendorNotFoundException();
         }
 
@@ -134,7 +139,7 @@ public class ItemServiceImpl implements ItemService {
                 .detail(itemRequest.detail())
                 .alarmThreshold(itemRequest.quantityAlarmThreshold())
                 .quantityThreshold(itemRequest.quantityReorderThreshold())
-                .effectiveDate(Date.from(Instant.now())).build();
+                .effectiveDate(Date.from(Instant.now())).vendorId(vendorId).build();
 
         //TODO: append the item id and provide custom filename
         //TODO: delete the existing picture url
@@ -158,7 +163,8 @@ public class ItemServiceImpl implements ItemService {
 
         final Item updatedItem = itemMapper.selectByPrimaryKey(itemId);
         return new ItemResponse(itemId, updatedItem.getName(), updatedItem.getDetail(),
-                updatedItem.getPics(), itemRequest.quantity(), updatedItem.getAlarmThreshold(), updatedItem.getQuantityThreshold());
+                updatedItem.getPics(), itemRequest.quantity(), updatedItem.getAlarmThreshold(),
+                updatedItem.getQuantityThreshold(), updatedItem.getVendorId());
     }
 
     @Override
@@ -211,7 +217,8 @@ public class ItemServiceImpl implements ItemService {
                 item.getPics(),
                 stockRecordMapper.selectByPrimaryKey(item.getId()).getQuantity(),
                 item.getAlarmThreshold(),
-                item.getQuantityThreshold()
+                item.getQuantityThreshold(),
+                item.getVendorId()
         );
     }
 
