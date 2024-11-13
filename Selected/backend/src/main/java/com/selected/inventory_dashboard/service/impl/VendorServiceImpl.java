@@ -50,8 +50,9 @@ public class VendorServiceImpl implements VendorService {
     }
 
     @Override
-    public boolean deleteVendor(final VendorRequest vendorRequest) {
-        return false;
+    public boolean deleteVendor(final Integer vendorId) {
+        vendorMapper.deleteByPrimaryKey(vendorId);
+        return vendorMapper.selectByPrimaryKey(vendorId) == null;
     }
 
     private VendorResponse mapVendorToVendorResponse(final Vendor vendor) {

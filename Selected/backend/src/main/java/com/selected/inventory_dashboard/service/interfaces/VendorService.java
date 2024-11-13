@@ -10,5 +10,5 @@ public interface VendorService {
     List<VendorResponse> getAllVendorsWithLimit(Integer limit);
     VendorResponse insertNewVendor(VendorRequest vendorRequest);
     VendorResponse updateVendor(Integer vendorId, VendorRequest vendorRequest);
-    boolean deleteVendor(VendorRequest vendorRequest);
+    boolean deleteVendor(Integer vendorId);
 }

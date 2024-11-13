@@ -36,4 +36,9 @@ public class VendorController {
     public ResponseEntity<VendorResponse> updateVendor(@PathVariable Integer vendorId, @RequestBody VendorRequest vendorRequest) {
         return ResponseEntity.ok(vendorService.updateVendor(vendorId, vendorRequest));
     }
+
+    @DeleteMapping("/{vendorId}")
+    public ResponseEntity<Boolean> deleteVendor(@PathVariable Integer vendorId) {
+        return ResponseEntity.ok(vendorService.deleteVendor(vendorId));
+    }
 }
