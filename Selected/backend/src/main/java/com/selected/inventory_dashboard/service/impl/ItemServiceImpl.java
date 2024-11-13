@@ -2,16 +2,20 @@ package com.selected.inventory_dashboard.service.impl;
 
 import com.selected.inventory_dashboard.constants.ReorderStatus;
 import com.selected.inventory_dashboard.dtovo.req.ItemRequest;
-import com.selected.inventory_dashboard.dtovo.res.ItemReorderResponse;
+import com.selected.inventory_dashboard.dtovo.req.VendorRequest;
+import com.selected.inventory_dashboard.dtovo.res.ItemAndQty;
 import com.selected.inventory_dashboard.dtovo.res.ItemResponse;
-import com.selected.inventory_dashboard.dtovo.res.ReorderResponseWrapper;
+import com.selected.inventory_dashboard.dtovo.res.ReorderTrackerResponse;
+import com.selected.inventory_dashboard.dtovo.res.ReorderTrackerResponseWrapper;
 import com.selected.inventory_dashboard.exception.AlarmThresholdException;
 import com.selected.inventory_dashboard.exception.NoItemDataException;
 import com.selected.inventory_dashboard.exception.NoVendorDataException;
 import com.selected.inventory_dashboard.persistence.dao.ItemMapper;
+import com.selected.inventory_dashboard.persistence.dao.ReorderTrackerMapper;
 import com.selected.inventory_dashboard.persistence.dao.StockRecordMapper;
 import com.selected.inventory_dashboard.persistence.dao.VendorMapper;
 import com.selected.inventory_dashboard.persistence.entity.Item;
+import com.selected.inventory_dashboard.persistence.entity.ReorderTracker;
 import com.selected.inventory_dashboard.persistence.entity.StockRecord;
 import com.selected.inventory_dashboard.persistence.entity.Vendor;
 import com.selected.inventory_dashboard.service.interfaces.EmailService;
@@ -38,15 +42,17 @@ public class ItemServiceImpl implements ItemService {
     private final FileUploaderServiceCoordinator fileUploaderServiceCoordinator;
     private final EmailService emailService;
     private final SMSService smsService;
+    private final ReorderTrackerMapper reorderTrackerMapper;
 
     public ItemServiceImpl(final ItemMapper itemMapper, final StockRecordMapper stockRecordMapper, final VendorMapper vendorMapper, final FileUploaderServiceCoordinator fileUploaderServiceCoordinator,
-                           final EmailService emailService, final SMSService smsService) {
+                           final EmailService emailService, final SMSService smsService, ReorderTrackerMapper reorderTrackerMapper) {
         this.itemMapper = itemMapper;
         this.stockRecordMapper = stockRecordMapper;
         this.vendorMapper = vendorMapper;
         this.fileUploaderServiceCoordinator = fileUploaderServiceCoordinator;
         this.emailService = emailService;
         this.smsService = smsService;
+        this.reorderTrackerMapper = reorderTrackerMapper;
     }
 
     @Override
@@ -170,37 +176,37 @@ public class ItemServiceImpl implements ItemService {
     @Override
     @Scheduled(cron = "0 0 2 * * ?")
     //TODO: Update cron to drive its value from application properties
-    public ReorderResponseWrapper reorderItemsLowStockItems() {
-        final List<ItemReorderResponse> successfullyReorderedItems = new ArrayList<>();
-        final List<ItemReorderResponse> itemsFailedToReorder = new ArrayList<>();
+    public ReorderTrackerResponseWrapper reorderItemsLowStockItems() {
+        final List<ReorderTrackerResponse> successfullyReorderedItems = new ArrayList<>();
+        final List<ReorderTrackerResponse> itemsFailedToReorder = new ArrayList<>();
 
-        final List<Item> lowStockItems = itemMapper.selectAll().stream().filter(
-                item -> stockRecordMapper
-                        .selectByPrimaryKey(item.getId()).getQuantity() < item.getQuantityThreshold()).toList();
+        final List<ItemAndQty> lowStockItems = itemMapper.findAllBelowQtyThreshold();
 
         lowStockItems.forEach(item -> {
             final Vendor vendor = vendorMapper.selectByPrimaryKey(item.getVendorId());
 
             try {
                 if (vendor.getEmail() != null) {
-                    //TODO: update reorder quantity once we have default reorder quantity setup at the db level
                     emailService.sendEmail(vendor.getEmail(), String.format("Item: %s, reorder", item.getName()),
-                            NotificationServiceHelper.createItemReorderEmailBody(vendor.getName(), item.getName(), 5));
+                            NotificationServiceHelper.createItemReorderEmailBody(vendor.getName(), item.getName(), item.getReorderQuantity()));
                 }
 
                 if (vendor.getPhone() != null) {
-                    //TODO: update reorder quantity once we have default reorder quantity setup at the db level
                     smsService.sendSMS(vendor.getPhone(),
-                            NotificationServiceHelper.createItemReorderSMSBody(item.getName(), 5));
+                            NotificationServiceHelper.createItemReorderSMSBody(item.getName(), item.getReorderQuantity()));
                 }
-                successfullyReorderedItems.add(new ItemReorderResponse(item.getId(), item.getVendorId(), ReorderStatus.REORDERED, ""));
+                //TODO: update the status to pass the string instead of integer
+                reorderTrackerMapper.updateByPrimaryKey(new ReorderTracker(item.getId(), Integer.parseInt(ReorderStatus.REORDERED.name()) , Date.from(Instant.now()), vendor.getId(), ""));
+                successfullyReorderedItems.add(new ReorderTrackerResponse(item.getId(), item.getVendorId(), ReorderStatus.REORDERED, ""));
             } catch (Exception e) {
+                //TODO: update the status to pass the string instead of integer
+                reorderTrackerMapper.updateByPrimaryKey(new ReorderTracker(item.getId(), Integer.parseInt(ReorderStatus.FAILED.name()) , Date.from(Instant.now()), vendor.getId(), e.getMessage()));
                 itemsFailedToReorder.add(new
-                        ItemReorderResponse(item.getId(), item.getVendorId(), ReorderStatus.FAILED, e.getMessage()));
+                        ReorderTrackerResponse(item.getId(), item.getVendorId(), ReorderStatus.FAILED, e.getMessage()));
             }
         });
 
-        return new ReorderResponseWrapper(successfullyReorderedItems, itemsFailedToReorder);
+        return new ReorderTrackerResponseWrapper(successfullyReorderedItems, itemsFailedToReorder);
     }
 
     private ItemResponse joinItemAndStockRecord(final Item item) {
