@@ -13,5 +13,4 @@ public class InventorySelectedApplication {
     public static void main(String[] args) {
         SpringApplication.run(InventorySelectedApplication.class, args);
     }
-
 }
