@@ -4,6 +4,7 @@ import Navbar from "../components/navbar"
 import LoginSignInPage from "../pages/LoginSignInPage/LoginSignInPage";
 import SignUpPage from "../pages/SignUpPage/SignUpPage";
 import ProfilePage from "../pages/ProfilePage/ProfilePage";
+import DashboardPage from "../pages/DashboardPage"
 
 const routes = createBrowserRouter([
   {
@@ -23,6 +24,10 @@ const routes = createBrowserRouter([
         path: "/profile/:id",
         element: <ProfilePage />
       },
+      {
+        path: "/dashboard",
+        element: <DashboardPage />
+      }
     ]
   }
 ])
