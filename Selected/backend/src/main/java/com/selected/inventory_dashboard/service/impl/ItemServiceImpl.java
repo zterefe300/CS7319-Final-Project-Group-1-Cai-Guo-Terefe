@@ -2,7 +2,6 @@ package com.selected.inventory_dashboard.service.impl;
 
 import com.selected.inventory_dashboard.constants.ReorderStatus;
 import com.selected.inventory_dashboard.dtovo.req.ItemRequest;
-import com.selected.inventory_dashboard.dtovo.req.VendorRequest;
 import com.selected.inventory_dashboard.dtovo.res.ItemAndQty;
 import com.selected.inventory_dashboard.dtovo.res.ItemResponse;
 import com.selected.inventory_dashboard.dtovo.res.ReorderTrackerResponse;
@@ -28,9 +27,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 @Service
 public class ItemServiceImpl implements ItemService {
@@ -58,46 +55,28 @@ public class ItemServiceImpl implements ItemService {
     @Override
     public List<ItemResponse> getAllItems() {
         //TODO: update this once we have  a join query between item and stock record
-        return itemMapper.selectAll().stream().map(this::joinItemAndStockRecord).toList();
+        return itemMapper.selectAll().stream().map(this::buildItemResponse).toList();
     }
 
     @Override
     public List<ItemResponse> getAllItemsWithLimit(final Integer limit) {
-        return itemMapper.selectLimit(limit).stream().map(this::joinItemAndStockRecord).toList();
+        return itemMapper.selectLimit(limit).stream().map(this::buildItemResponse).toList();
     }
 
     ///TODO: Breakdown service into methods. Add error handling for insert operations
     @Override
     public ItemResponse insertNewItem(final ItemRequest itemRequest) {
         //check if alert threshold is above re-order threshold
-        if (itemRequest.quantityAlarmThreshold() < itemRequest.quantityReorderThreshold()) {
-           throw new AlarmThresholdException();
-        }
+        validateThreshold(itemRequest);
 
         final Integer vendorId = itemRequest.vendorId();
+        validateVendorData(vendorId);
 
-        //Throw default no vendor data exception, if vendor data is not provided as part if the request
-        if (vendorId == null) {
-            throw new NoVendorDataException();
-        }
-
-        //Throw no vendor data found, when a vendor id is provided but the vendor doesn't exist in the db
-        if (vendorMapper.selectByPrimaryKey(vendorId) == null) {
-            throw NoVendorDataException.vendorNotFoundException();
-        }
-
-        final MultipartFile pictureStream = itemRequest.picturesStream();
+        final MultipartFile pictureStream = itemRequest.pictureStream();
         //TODO: Pass custom name with the item id.
         final String itemPicturesRootUrl = insertOrUpdatePictureAndGetUrl(pictureStream);
 
-        Integer itemId = itemMapper.insert(Item.builder()
-                .name(itemRequest.name())
-                .detail(itemRequest.detail())
-                .pics(itemPicturesRootUrl)
-                .alarmThreshold(itemRequest.quantityAlarmThreshold())
-                .quantityThreshold(itemRequest.quantityReorderThreshold())
-                .vendorId(vendorId).effectiveDate(Date.from(Instant.now())).build());
-
+        Integer itemId = itemMapper.insert(buildItemFromItemRequest(itemRequest, itemPicturesRootUrl, vendorId));
         final Item item = itemMapper.selectByPrimaryKey(itemId);
 
         //Create stock record of the item with quantity one since we only add a single item.
@@ -116,55 +95,29 @@ public class ItemServiceImpl implements ItemService {
     @Override
     public ItemResponse updateItem(final Integer itemId, final ItemRequest itemRequest) {
         //check if alert threshold is above re-order threshold
-        if (itemRequest.quantityAlarmThreshold() < itemRequest.quantityReorderThreshold()) {
-            throw new AlarmThresholdException();
-        }
+        validateThreshold(itemRequest);
 
         if (itemMapper.selectByPrimaryKey(itemId) == null) {
             throw new NoItemDataException();
         }
 
         final Integer vendorId = itemRequest.vendorId();
+        validateVendorData(vendorId);
 
-        if (vendorId == null) {
-            throw new NoVendorDataException();
-        }
-
-        if (vendorMapper.selectByPrimaryKey(vendorId) == null) {
-            throw NoVendorDataException.vendorNotFoundException();
-        }
-
-        final Item itemToUpdate = Item.builder()
-                .name(itemRequest.name())
-                .detail(itemRequest.detail())
-                .alarmThreshold(itemRequest.quantityAlarmThreshold())
-                .quantityThreshold(itemRequest.quantityReorderThreshold())
-                .effectiveDate(Date.from(Instant.now())).vendorId(vendorId).build();
-
-        //TODO: append the item id and provide custom filename
-        //TODO: delete the existing picture url
-        final String updatedPictureFileUrl = insertOrUpdatePictureAndGetUrl(itemRequest.picturesStream());
-        //Avoid updating current item picture url if the new updated picture url is null
-        if (updatedPictureFileUrl != null) {
-            itemToUpdate.setPics(updatedPictureFileUrl);
-        } else {
-            logger.debug("Skipping to update picture url because the new updated url is found to be null. " +
-                    "Please try again by uploading new media");
-        }
+        final String updatedPictureFileUrl = insertOrUpdatePictureAndGetUrl(itemRequest.pictureStream());
+        final Item itemWithUpdates = buildItemFromItemRequest(itemRequest, updatedPictureFileUrl, vendorId);
 
         //Update item
         itemMapper.updateByPrimaryKey(
-                itemToUpdate
+                itemWithUpdates
         );
         //Update stock record
-         stockRecordMapper.updateByPrimaryKey(StockRecord.builder()
+        stockRecordMapper.updateByPrimaryKey(StockRecord.builder()
                 .itemId(itemId).quantity(itemRequest.quantity())
                 .effectiveDate(Date.from(Instant.now())).build());
 
         final Item updatedItem = itemMapper.selectByPrimaryKey(itemId);
-        return new ItemResponse(itemId, updatedItem.getName(), updatedItem.getDetail(),
-                updatedItem.getPics(), itemRequest.quantity(), updatedItem.getAlarmThreshold(),
-                updatedItem.getQuantityThreshold(), updatedItem.getVendorId());
+        return buildItemResponseGivenQuantity(updatedItem, itemRequest.quantity());
     }
 
     @Override
@@ -179,47 +132,73 @@ public class ItemServiceImpl implements ItemService {
     public ReorderTrackerResponseWrapper reorderItemsLowStockItems() {
         final List<ReorderTrackerResponse> successfullyReorderedItems = new ArrayList<>();
         final List<ReorderTrackerResponse> itemsFailedToReorder = new ArrayList<>();
+        Map<ReorderStatus, List<ReorderTrackerResponse>> statusListMap = Map.of(ReorderStatus.REORDERED, successfullyReorderedItems,
+                ReorderStatus.FAILED, itemsFailedToReorder);
 
         final List<ItemAndQty> lowStockItems = itemMapper.findAllBelowQtyThreshold();
-
         lowStockItems.forEach(item -> {
-            final Vendor vendor = vendorMapper.selectByPrimaryKey(item.getVendorId());
-
-            try {
-                if (vendor.getEmail() != null) {
-                    emailService.sendEmail(vendor.getEmail(), String.format("Item: %s, reorder", item.getName()),
-                            NotificationServiceHelper.createItemReorderEmailBody(vendor.getName(), item.getName(), item.getReorderQuantity()));
-                }
-
-                if (vendor.getPhone() != null) {
-                    smsService.sendSMS(vendor.getPhone(),
-                            NotificationServiceHelper.createItemReorderSMSBody(item.getName(), item.getReorderQuantity()));
-                }
-                //TODO: update the status to pass the string instead of integer
-                reorderTrackerMapper.updateByPrimaryKey(new ReorderTracker(item.getId(), Integer.parseInt(ReorderStatus.REORDERED.name()) , Date.from(Instant.now()), vendor.getId(), ""));
-                successfullyReorderedItems.add(new ReorderTrackerResponse(item.getId(), item.getVendorId(), ReorderStatus.REORDERED, ""));
-            } catch (Exception e) {
-                //TODO: update the status to pass the string instead of integer
-                reorderTrackerMapper.updateByPrimaryKey(new ReorderTracker(item.getId(), Integer.parseInt(ReorderStatus.FAILED.name()) , Date.from(Instant.now()), vendor.getId(), e.getMessage()));
-                itemsFailedToReorder.add(new
-                        ReorderTrackerResponse(item.getId(), item.getVendorId(), ReorderStatus.FAILED, e.getMessage()));
-            }
+            final ReorderTrackerResponse reorderTrackerResponse =  handleSingleItemReorder(item);
+            statusListMap.get(reorderTrackerResponse.reorderStatus()).add(reorderTrackerResponse);
         });
 
         return new ReorderTrackerResponseWrapper(successfullyReorderedItems, itemsFailedToReorder);
     }
 
-    private ItemResponse joinItemAndStockRecord(final Item item) {
-        return  new ItemResponse(
+    private void validateVendorData(final Integer vendorId) {
+        if (vendorId == null) {
+            throw new NoVendorDataException();
+        }
+
+        //Throw no vendor data found, when a vendor id is provided but the vendor doesn't exist in the db
+        if (vendorMapper.selectByPrimaryKey(vendorId) == null) {
+            throw NoVendorDataException.vendorNotFoundException();
+        }
+    }
+
+    private void validateThreshold(final ItemRequest itemRequest) {
+        if (itemRequest.quantityAlarmThreshold() < itemRequest.quantityReorderThreshold()) {
+            throw new AlarmThresholdException();
+        }
+    }
+
+    private ItemResponse buildItemResponse(final Item item) {
+        final Optional<StockRecord> recentStockRecord = stockRecordMapper.findByItemId(item.getId())
+                .stream().max(Comparator.comparing(StockRecord::getEffectiveDate));
+
+        final Integer recentStockRecordQuantity = recentStockRecord.map(StockRecord::getQuantity).orElse(null);
+        return buildItemResponseGivenQuantity(item, recentStockRecordQuantity);
+    }
+
+    private ItemResponse buildItemResponseGivenQuantity(final Item item, final Integer quantity) {
+        return new ItemResponse(
                 item.getId(),
                 item.getName(),
                 item.getDetail(),
                 item.getPics(),
-                stockRecordMapper.selectByPrimaryKey(item.getId()).getQuantity(),
+                quantity,
                 item.getAlarmThreshold(),
                 item.getQuantityThreshold(),
                 item.getVendorId()
         );
+    }
+
+    private Item buildItemFromItemRequest(final ItemRequest itemRequest,
+                                          final String itemPicturesRootUrl, final Integer vendorId) {
+        Item.ItemBuilder itemBuilder = Item.builder()
+                .name(itemRequest.name())
+                .detail(itemRequest.detail())
+                .alarmThreshold(itemRequest.quantityAlarmThreshold())
+                .quantityThreshold(itemRequest.quantityReorderThreshold())
+                .vendorId(vendorId).effectiveDate(Date.from(Instant.now()));
+
+        if (itemPicturesRootUrl != null) {
+            itemBuilder.pics(itemPicturesRootUrl);
+        } else {
+            logger.debug("Skipping to build picture url because the picture url is found to be null. " +
+                    "Please try again by uploading new media");
+        }
+
+        return itemBuilder.build();
     }
 
     private String insertOrUpdatePictureAndGetUrl(final MultipartFile pictureFile) {
@@ -227,5 +206,29 @@ public class ItemServiceImpl implements ItemService {
             return fileUploaderServiceCoordinator.uploadPicture(pictureFile, "");
         }
         return null;
+    }
+
+    private ReorderTrackerResponse handleSingleItemReorder(final Item item) {
+        final Vendor vendor = vendorMapper.selectByPrimaryKey(item.getVendorId());
+
+        try {
+            if (vendor.getEmail() != null) {
+                emailService.sendEmail(vendor.getEmail(), String.format("Item: %s, reorder", item.getName()),
+                        NotificationServiceHelper.createItemReorderEmailBody(vendor.getName(), item.getName(), item.getReorderQuantity()));
+            }
+
+            if (vendor.getPhone() != null) {
+                smsService.sendSMS(vendor.getPhone(),
+                        NotificationServiceHelper.createItemReorderSMSBody(item.getName(), item.getReorderQuantity()));
+            }
+            //TODO: update the status to pass the string instead of integer
+            reorderTrackerMapper.updateByPrimaryKey(new ReorderTracker(item.getId(), Integer.parseInt(ReorderStatus.REORDERED.name()) , Date.from(Instant.now()), vendor.getId(), ""));
+            return new ReorderTrackerResponse(item.getId(), item.getVendorId(), ReorderStatus.REORDERED, "");
+        } catch (Exception e) {
+            //TODO: update the status to pass the string instead of integer
+            reorderTrackerMapper.updateByPrimaryKey(new ReorderTracker(item.getId(), Integer.parseInt(ReorderStatus.FAILED.name()) , Date.from(Instant.now()), vendor.getId(), e.getMessage()));
+            return new
+                    ReorderTrackerResponse(item.getId(), item.getVendorId(), ReorderStatus.FAILED, e.getMessage());
+        }
     }
 }
