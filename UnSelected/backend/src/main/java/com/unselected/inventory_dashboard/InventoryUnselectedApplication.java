@@ -1,4 +1,4 @@
-package com.inventory_dashboard.u_backend;
+package com.unselected.inventory_dashboard;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

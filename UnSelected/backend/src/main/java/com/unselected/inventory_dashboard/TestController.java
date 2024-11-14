@@ -1,10 +1,8 @@
-package com.inventory_dashboard.u_backend;
+package com.unselected.inventory_dashboard;
 
-import com.inventory_dashboard.u_backend.db.Dao;
-import com.inventory_dashboard.u_backend.entity.Item;
+import com.unselected.inventory_dashboard.db.Dao;
+import com.unselected.inventory_dashboard.entity.Item;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;

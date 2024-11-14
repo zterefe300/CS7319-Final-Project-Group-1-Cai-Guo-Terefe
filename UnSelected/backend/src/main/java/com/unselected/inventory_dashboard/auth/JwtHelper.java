@@ -1,4 +1,4 @@
-package com.inventory_dashboard.u_backend.auth;
+package com.unselected.inventory_dashboard.auth;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;

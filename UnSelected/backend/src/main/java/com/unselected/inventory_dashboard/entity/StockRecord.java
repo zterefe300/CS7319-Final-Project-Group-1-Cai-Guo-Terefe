@@ -1,4 +1,4 @@
-package com.inventory_dashboard.u_backend.entity;
+package com.unselected.inventory_dashboard.entity;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
@@ -11,19 +11,17 @@ import java.util.Date;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Vendor {
+public class StockRecord {
     private Integer id;
 
-    private String name;
+    private Integer itemId;
 
-    private String email;
+    private Integer quantity;
 
-    private String phone;
+    private String operator;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "UTC")
-    private Date createTime;
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "UTC")
-    private Date updateTime;
+    private Date effectiveDate;
 
 
 }

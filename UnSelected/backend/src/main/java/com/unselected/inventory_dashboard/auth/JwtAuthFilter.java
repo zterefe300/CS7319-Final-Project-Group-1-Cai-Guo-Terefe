@@ -1,4 +1,4 @@
-package com.inventory_dashboard.u_backend.auth;
+package com.unselected.inventory_dashboard.auth;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.FilterChain;

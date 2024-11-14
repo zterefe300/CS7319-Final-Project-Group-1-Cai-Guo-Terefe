@@ -1,11 +1,10 @@
-package com.inventory_dashboard.u_backend.controller;
+package com.unselected.inventory_dashboard.controller;
 
-import com.inventory_dashboard.u_backend.auth.JwtHelper;
-
-import com.inventory_dashboard.u_backend.db.Dao;
-import com.inventory_dashboard.u_backend.dto.LoginDto;
-import com.inventory_dashboard.u_backend.dto.SignupDto;
-import com.inventory_dashboard.u_backend.entity.User;
+import com.unselected.inventory_dashboard.auth.JwtHelper;
+import com.unselected.inventory_dashboard.db.Dao;
+import com.unselected.inventory_dashboard.dto.LoginDto;
+import com.unselected.inventory_dashboard.dto.SignupDto;
+import com.unselected.inventory_dashboard.entity.User;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;

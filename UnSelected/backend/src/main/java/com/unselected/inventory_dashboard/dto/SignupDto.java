@@ -1,4 +1,4 @@
-package com.inventory_dashboard.u_backend.dto;
+package com.unselected.inventory_dashboard.dto;
 
 import lombok.Data;
 

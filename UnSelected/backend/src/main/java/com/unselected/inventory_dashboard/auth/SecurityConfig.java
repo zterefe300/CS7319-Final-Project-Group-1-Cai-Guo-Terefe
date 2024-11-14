@@ -1,4 +1,4 @@
-package com.inventory_dashboard.u_backend.auth;
+package com.unselected.inventory_dashboard.auth;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
