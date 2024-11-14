@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Box,
   Button,
@@ -9,7 +9,9 @@ import {
   Grid2,
   Typography,
 } from "@mui/material";
-import { Alert, Flex, Statistic } from "antd";
+import { Alert, Flex } from "antd";
+
+import ModalWindow from "./ModalWindow";
 
 const itemDetails = [
   {
@@ -45,11 +47,17 @@ const itemDetails = [
 ];
 
 function DashboardPage() {
+  const [modalState, setModalState] = useState(false);
   const handleViewMoreButton = (id) => {
     //TODO: handle reroute to item detail page
     console.log(id);
   };
 
+  const handleModalPopup = () => {
+    setModalState((prevState) => !prevState);
+  };
+
+  console.log('modal', modalState)
   const renderItemDetailCard = itemDetails.map((item) => {
     return (
       <Grid2 size={4} key={item.id}>
@@ -91,9 +99,24 @@ function DashboardPage() {
   });
 
   return (
-    <Grid2 container spacing={2}>
-      {renderItemDetailCard}
-    </Grid2>
+    <>
+      <Flex justify="flex-end" align="center">
+        <Button
+          variant="contained"
+          style={{ margin: "10px" }}
+          onClick={handleModalPopup}
+        >
+          Add Item
+        </Button>
+      </Flex>
+      <Grid2 container spacing={2}>
+        {renderItemDetailCard}
+      </Grid2>
+      <ModalWindow
+        modalState={modalState}
+        handleModalPopup={handleModalPopup}
+      />
+    </>
   );
 }
 

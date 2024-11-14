@@ -158,11 +158,6 @@ function Navbar() {
           </Toolbar>
         </Container>
       </AppBar>
-      <Box
-        sx={{
-          mt: 10,
-        }}
-      />
       <Outlet />
     </>
   );
