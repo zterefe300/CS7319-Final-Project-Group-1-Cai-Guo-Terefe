@@ -9,9 +9,10 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { useNavigate } from "react-router-dom";
+import { replace, useNavigate } from "react-router-dom";
 
 const SignUpPage = () => {
+  const navigate = useNavigate();
   const [errors, setErrors] = useState({
     firstName: false,
     lastName: false,
@@ -96,7 +97,27 @@ const SignUpPage = () => {
 
   const handleAccountCreation = () => {
     const isValid = isValidInput();
-    if (!isValid) alert("Something is invalid");
+    if (isValid) {
+      const payload = {
+        firstName: inputValues.firstName,
+        lastName: inputValues.lastName,
+        userName: inputValues.userName,
+        email: inputValues.email,
+        password: inputValues.password,
+        confirmPassword: inputValues.confirmPassword,
+        adminCode: inputValues.adminCode,
+      };
+
+      fetch("http://localhost:8080/inventory/selected/api/auth/signup", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      })
+        .then(() => navigate("/", { replace: true }))
+        .catch(() => alert("Something went wrong"));
+    }
   };
 
   const handleResetButton = () => {
