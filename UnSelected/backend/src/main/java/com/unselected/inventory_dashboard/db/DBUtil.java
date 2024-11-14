@@ -1,10 +1,7 @@
-package com.inventory_dashboard.u_backend.db;
+package com.unselected.inventory_dashboard.db;
 
-import com.inventory_dashboard.u_backend.entity.Item;
-import jakarta.annotation.PostConstruct;
-import org.springframework.beans.factory.annotation.Value;
+import com.unselected.inventory_dashboard.entity.Item;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Component;
 
 import java.sql.*;

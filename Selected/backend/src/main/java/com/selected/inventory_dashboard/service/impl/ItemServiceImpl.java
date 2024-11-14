@@ -79,16 +79,11 @@ public class ItemServiceImpl implements ItemService {
         Integer itemId = itemMapper.insert(buildItemFromItemRequest(itemRequest, itemPicturesRootUrl, vendorId));
         final Item item = itemMapper.selectByPrimaryKey(itemId);
 
+        final Integer quantity = 1;
         //Create stock record of the item with quantity one since we only add a single item.
-        Integer stockRecordId = stockRecordMapper.insert(StockRecord.builder().itemId(itemId)
-                .quantity(1).effectiveDate(Date.from(Instant.now())).build());
-        final StockRecord stockRecord = stockRecordMapper.selectByPrimaryKey(stockRecordId);
-
-        return new ItemResponse(
-                itemId, item.getName(), item.getDetail(), item.getPics(), stockRecord.getQuantity(),
-                item.getAlarmThreshold(), item.getQuantityThreshold(),
-                item.getVendorId()
-        );
+        stockRecordMapper.insert(StockRecord.builder().itemId(itemId)
+                .quantity(quantity).effectiveDate(Date.from(Instant.now())).build());
+        return buildItemResponseGivenQuantity(item, quantity);
     }
 
     ///TODO: Breakdown service into methods. Add error handling for update operations
@@ -222,11 +217,11 @@ public class ItemServiceImpl implements ItemService {
                         NotificationServiceHelper.createItemReorderSMSBody(item.getName(), item.getReorderQuantity()));
             }
             //TODO: update the status to pass the string instead of integer
-            reorderTrackerMapper.updateByPrimaryKey(new ReorderTracker(item.getId(), Integer.parseInt(ReorderStatus.REORDERED.name()) , Date.from(Instant.now()), vendor.getId(), ""));
+            reorderTrackerMapper.insert(new ReorderTracker(item.getId(), Integer.parseInt(ReorderStatus.REORDERED.name()) , Date.from(Instant.now()), vendor.getId(), ""));
             return new ReorderTrackerResponse(item.getId(), item.getVendorId(), ReorderStatus.REORDERED, "");
         } catch (Exception e) {
             //TODO: update the status to pass the string instead of integer
-            reorderTrackerMapper.updateByPrimaryKey(new ReorderTracker(item.getId(), Integer.parseInt(ReorderStatus.FAILED.name()) , Date.from(Instant.now()), vendor.getId(), e.getMessage()));
+            reorderTrackerMapper.insert(new ReorderTracker(item.getId(), Integer.parseInt(ReorderStatus.FAILED.name()) , Date.from(Instant.now()), vendor.getId(), e.getMessage()));
             return new
                     ReorderTrackerResponse(item.getId(), item.getVendorId(), ReorderStatus.FAILED, e.getMessage());
         }

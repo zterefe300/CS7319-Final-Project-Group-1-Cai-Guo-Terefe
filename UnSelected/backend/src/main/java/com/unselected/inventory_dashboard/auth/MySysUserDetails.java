@@ -1,6 +1,6 @@
-package com.inventory_dashboard.u_backend.auth;
+package com.unselected.inventory_dashboard.auth;
 
-import com.inventory_dashboard.u_backend.entity.User;
+import com.unselected.inventory_dashboard.entity.User;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

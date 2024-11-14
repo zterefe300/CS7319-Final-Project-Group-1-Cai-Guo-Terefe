@@ -1,14 +1,12 @@
-package com.inventory_dashboard.u_backend.auth;
+package com.unselected.inventory_dashboard.auth;
 
-import com.inventory_dashboard.u_backend.db.Dao;
-import com.inventory_dashboard.u_backend.entity.User;
+import com.unselected.inventory_dashboard.db.Dao;
+import com.unselected.inventory_dashboard.entity.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
-
-import java.sql.SQLException;
 
 /**
  * @author: Haiyan Cai

@@ -1,7 +1,7 @@
-package com.inventory_dashboard.u_backend.db;
+package com.unselected.inventory_dashboard.db;
 
-import com.inventory_dashboard.u_backend.dto.ItemAndQty;
-import com.inventory_dashboard.u_backend.entity.*;
+import com.unselected.inventory_dashboard.dto.ItemAndQty;
+import com.unselected.inventory_dashboard.entity.*;
 import org.springframework.stereotype.Repository;
 
 import java.sql.*;
@@ -20,10 +20,10 @@ public class Dao {
 
     //----------------------------------Item------------------------------------------------------------------------------
 
-    public void createItem(Item item){
+    public Integer createItem(Item item){
         String sql = "INSERT INTO item (name, detail, pics, alarm_threshold, quantity_threshold, vendor_id, effective_date,reorder_quantity) VALUES (?, ?, ?, ?, ?, ?, ?,?)";
         try (Connection conn = DBUtil.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+             PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);) {
 
             stmt.setString(1, item.getName());
             stmt.setString(2, item.getDetail());
@@ -33,7 +33,19 @@ public class Dao {
             stmt.setInt(6, item.getVendorId());
             stmt.setTimestamp(7, new Timestamp(item.getEffectiveDate().getTime()));
             stmt.setInt(8,item.getReorderQuantity());
-            stmt.executeUpdate();
+            int affectedRows = stmt.executeUpdate();
+
+            if (affectedRows == 0) {
+                throw new SQLException("Failed to insert item, no rows affected");
+            }
+
+            try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
+                if (generatedKeys.next()) {
+                    return generatedKeys.getInt(1);
+                } else {
+                    throw new SQLException("Failed to insert item, no ID obtained");
+                }
+            }
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }

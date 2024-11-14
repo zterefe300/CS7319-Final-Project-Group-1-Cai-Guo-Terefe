@@ -1,4 +1,4 @@
-package com.inventory_dashboard.u_backend.entity;
+package com.unselected.inventory_dashboard.entity;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
