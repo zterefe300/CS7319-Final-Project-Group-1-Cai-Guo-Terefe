@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Flex, InputNumber, Modal, Typography } from "antd";
 import PropTypes from "prop-types";
 import { Button, Grid2, TextField } from "@mui/material";
@@ -18,6 +18,35 @@ const VisuallyHiddenInput = styled("input")({
 });
 
 function ModalWindow({ modalState, handleModalPopup }) {
+  const [inputValues, setInputValues] = useState({
+    itemName: "",
+    vendorId: null,
+    itemDescription: "",
+    itemQuantity: 0,
+    quantityThreshold: 0,
+    alarmThreshold: 0,
+    picture: null,
+  });
+
+  const handleInputChange = (e) => {
+    const name = e.target.name;
+    let value = e.target.value;
+
+    if (name === "vendorId") value = value ? Number(e.target.value) : null;
+    setInputValues((prevState) => ({
+      ...prevState,
+      [name]: value,
+    }));
+  };
+
+  const handleInputNumberChange = (name, value) => {
+    setInputValues((prevState) => ({
+      ...prevState,
+      [name]: value,
+    }));
+  };
+
+  console.log("inputValue", inputValues);
   return (
     <Modal
       title="Add new item"
@@ -33,11 +62,11 @@ function ModalWindow({ modalState, handleModalPopup }) {
             name="itemName"
             id="itemName"
             label="Item Name"
-            // onChange={handleInputChange}
+            onChange={handleInputChange}
             fullWidth
             variant="outlined"
             required
-            // value={inputValues.userName}
+            value={inputValues.itemName}
             type="input"
           />
         </Grid2>
@@ -46,11 +75,11 @@ function ModalWindow({ modalState, handleModalPopup }) {
             name="vendorId"
             id="venderId"
             label="Vendor Id"
-            // onChange={handleInputChange}
+            onChange={handleInputChange}
             fullWidth
             variant="outlined"
             required
-            // value={inputValues.password}
+            value={inputValues.vendorId}
             type="input"
           />
         </Grid2>
@@ -59,11 +88,11 @@ function ModalWindow({ modalState, handleModalPopup }) {
             name="itemDescription"
             id="itemDescription"
             label="Item Description"
-            // onChange={handleInputChange}
+            onChange={handleInputChange}
             fullWidth
             variant="outlined"
             required
-            // value={inputValues.password}
+            value={inputValues.itemDescription}
             type="input"
           />
         </Grid2>
@@ -77,10 +106,9 @@ function ModalWindow({ modalState, handleModalPopup }) {
               Item Quantity
             </Typography>
             <InputNumber
-              min={1}
-              max={10}
-              defaultValue={3}
               style={{ marginLeft: "3px" }}
+              onChange={(e) => handleInputNumberChange(e, "itemQuantity")}
+              value={inputValues.itemQuantity}
             />
           </Flex>
         </Grid2>
@@ -94,10 +122,9 @@ function ModalWindow({ modalState, handleModalPopup }) {
               Quantity Threshold
             </Typography>
             <InputNumber
-              min={1}
-              max={10}
-              defaultValue={3}
               style={{ marginLeft: "3px" }}
+              onChange={(e) => handleInputNumberChange(e, "quantityThreshold")}
+              value={inputValues.quantityThreshold}
             />
           </Flex>
         </Grid2>
@@ -111,10 +138,9 @@ function ModalWindow({ modalState, handleModalPopup }) {
               Alarm Threshold
             </Typography>
             <InputNumber
-              min={1}
-              max={10}
-              defaultValue={3}
               style={{ marginLeft: "3px" }}
+              onChange={(e) => handleInputNumberChange(e, "alarmThreshold")}
+              value={inputValues.alarmThreshold}
             />
           </Flex>
         </Grid2>
@@ -129,7 +155,12 @@ function ModalWindow({ modalState, handleModalPopup }) {
             Upload files
             <VisuallyHiddenInput
               type="file"
-              onChange={(event) => console.log(event.target.files)}
+              onChange={(event) =>
+                setInputValues((prevState) => ({
+                  ...prevState,
+                  picture: event.target.files,
+                }))
+              }
               multiple
             />
           </Button>

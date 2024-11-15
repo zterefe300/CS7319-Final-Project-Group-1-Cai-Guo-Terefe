@@ -17,7 +17,6 @@ const SignUpPage = () => {
     firstName: false,
     lastName: false,
     userName: false,
-    email: false,
     password: false,
     confirmPassword: false,
   });
@@ -26,7 +25,6 @@ const SignUpPage = () => {
     firstName: "",
     lastName: "",
     userName: "",
-    email: "",
     password: "",
     confirmPassword: "",
     adminCode: "",
@@ -39,17 +37,15 @@ const SignUpPage = () => {
       firstName = "",
       lastName = "",
       userName = "",
-      email = "",
       password = "",
       confirmPassword = "",
     } = inputValues;
 
     const isValidPasswordLength =
-      (password.length > 8 && password.length < 32) ||
+      (password.length > 7 && password.length < 32) ||
       (confirmPassword.length > 8 && confirmPassword.length < 32);
     const isPasswordMatch = password === confirmPassword;
     const isValidPassword = isValidPasswordLength && isPasswordMatch;
-    const isValidEmail = email.match(/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/g);
 
     if (!isPasswordMatch) {
       passwordErrorMessage = "Password do not match";
@@ -65,9 +61,6 @@ const SignUpPage = () => {
     userName
       ? (errorField = { ...errorField, userName: false })
       : (errorField = { ...errorField, userName: true });
-    isValidEmail
-      ? (errorField = { ...errorField, email: false })
-      : (errorField = { ...errorField, email: "Enter a correct email" });
     isValidPassword
       ? (errorField = {
           ...errorField,
@@ -81,9 +74,7 @@ const SignUpPage = () => {
         });
 
     setErrors(errorField);
-    return Boolean(
-      firstName && lastName && userName && isValidEmail && isValidPassword
-    );
+    return Boolean(firstName && lastName && userName && isValidPassword);
   };
 
   const handleInputChange = (e) => {
@@ -102,7 +93,6 @@ const SignUpPage = () => {
         firstName: inputValues.firstName,
         lastName: inputValues.lastName,
         userName: inputValues.userName,
-        email: inputValues.email,
         password: inputValues.password,
         confirmPassword: inputValues.confirmPassword,
         adminCode: inputValues.adminCode,
@@ -125,7 +115,6 @@ const SignUpPage = () => {
       firstName: "",
       lastName: "",
       userName: "",
-      email: "",
       password: "",
       confirmPassword: "",
       adminCode: "",
@@ -134,7 +123,6 @@ const SignUpPage = () => {
       firstName: false,
       lastName: false,
       userName: false,
-      email: false,
       password: false,
       confirmPassword: false,
     });
@@ -191,20 +179,6 @@ const SignUpPage = () => {
                 value={inputValues.userName}
                 type="input"
                 error={errors.userName}
-              />
-            </Grid2>
-            <Grid2 size={12}>
-              <TextField
-                name="email"
-                id="email"
-                label="Email"
-                onChange={handleInputChange}
-                fullWidth
-                variant="outlined"
-                required
-                value={inputValues.email}
-                type="email"
-                error={errors.email}
               />
             </Grid2>
             <Grid2 size={12}>
@@ -267,9 +241,6 @@ const SignUpPage = () => {
           </Grid2>
           {errors.password && (
             <Typography color="error">{errors.password}</Typography>
-          )}
-          {errors.email && (
-            <Typography color="error">{errors.email}</Typography>
           )}
         </CardContent>
       </Card>

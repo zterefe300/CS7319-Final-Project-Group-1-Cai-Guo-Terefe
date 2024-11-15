@@ -9,8 +9,11 @@ import {
   TextField,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { setPersonDetail } from "../../redux/PersonSlice/personSlice";
 
 const LoginSignInPage = () => {
+  const dispatch = useDispatch();
   const navigate = useNavigate();
   const [inputValues, setInputValues] = useState({
     userName: "",
@@ -39,7 +42,11 @@ const LoginSignInPage = () => {
       },
       body: JSON.stringify(payload),
     })
-      .then(() => console.log("logged in"))
+      .then((resp) => resp.json())
+      .then((resp) => {
+        dispatch(setPersonDetail(resp));
+        navigate("/dashboard", { replace: true });
+      })
       .catch((err) => console.log(err));
   };
 
