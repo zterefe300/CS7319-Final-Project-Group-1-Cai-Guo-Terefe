@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Box,
   Button,
@@ -10,6 +10,7 @@ import {
   Typography,
 } from "@mui/material";
 import { Alert, Flex } from "antd";
+import { useSelector } from "react-redux";
 
 import ModalWindow from "./ModalWindow";
 
@@ -47,7 +48,23 @@ const itemDetails = [
 ];
 
 function DashboardPage() {
+  const { token = "" } = useSelector((state) => state.personDetails);
   const [modalState, setModalState] = useState(false);
+  const [data, setData] = useState(null);
+
+  useEffect(() => {
+    fetch("http://localhost:8080/inventory/selected/api/items", {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": token,
+      },
+    })
+      .then((resp) => resp.json())
+      .then((resp) => setData(resp))
+      .catch((err) => console.log(err));
+  }, []);
+
   const handleViewMoreButton = (id) => {
     //TODO: handle reroute to item detail page
     console.log(id);
@@ -57,7 +74,6 @@ function DashboardPage() {
     setModalState((prevState) => !prevState);
   };
 
-  console.log('modal', modalState)
   const renderItemDetailCard = itemDetails.map((item) => {
     return (
       <Grid2 size={4} key={item.id}>

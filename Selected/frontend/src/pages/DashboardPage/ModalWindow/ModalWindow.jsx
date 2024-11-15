@@ -4,6 +4,7 @@ import PropTypes from "prop-types";
 import { Button, Grid2, TextField } from "@mui/material";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import { styled } from "@mui/material/styles";
+import { useSelector } from "react-redux";
 
 const VisuallyHiddenInput = styled("input")({
   clip: "rect(0 0 0 0)",
@@ -18,6 +19,7 @@ const VisuallyHiddenInput = styled("input")({
 });
 
 function ModalWindow({ modalState, handleModalPopup }) {
+  const { token = "" } = useSelector((state) => state.personDetail.token);
   const [inputValues, setInputValues] = useState({
     itemName: "",
     vendorId: null,
@@ -39,20 +41,57 @@ function ModalWindow({ modalState, handleModalPopup }) {
     }));
   };
 
-  const handleInputNumberChange = (name, value) => {
+  const handleInputNumberChange = (value, name) => {
     setInputValues((prevState) => ({
       ...prevState,
       [name]: value,
     }));
   };
 
-  console.log("inputValue", inputValues);
+  const handleCancelModal = () => {
+    handleModalPopup();
+    setInputValues({
+      itemName: "",
+      vendorId: null,
+      itemDescription: "",
+      itemQuantity: 0,
+      quantityThreshold: 0,
+      alarmThreshold: 0,
+      picture: null,
+    });
+  };
+
+  const handleCreateButton = () => {
+    const payload = {
+      itemName: inputValues.itemName,
+      vendorId: inputValues.vendorId,
+      itemDescription: inputValues.itemDescription,
+      itemQuantity: inputValues.itemQuantity,
+      quantityThreshold: inputValues.quantityThreshold,
+      alarmThreshold: inputValues.alarmThreshold,
+      picture: inputValues.picture,
+    };
+
+    fetch("http://localhost:8080/inventory/selected/api/items", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": token,
+      },
+      body: payload,
+    })
+      .then(() => {
+        handleModalPopup();
+      })
+      .catch((err) => console.log(err));
+  };
+
   return (
     <Modal
       title="Add new item"
       open={modalState}
       onOk={handleModalPopup}
-      onCancel={handleModalPopup}
+      onCancel={handleCancelModal}
       okText="Add"
       cancelText="Cancel"
     >
