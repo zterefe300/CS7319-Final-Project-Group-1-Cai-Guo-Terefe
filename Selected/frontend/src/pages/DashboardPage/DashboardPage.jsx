@@ -57,7 +57,7 @@ function DashboardPage() {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": token,
+        // "Authorization": token,
       },
     })
       .then((resp) => resp.json())
@@ -67,7 +67,6 @@ function DashboardPage() {
 
   const handleViewMoreButton = (id) => {
     //TODO: handle reroute to item detail page
-    console.log(id);
   };
 
   const handleModalPopup = () => {
