@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { Button, Card, CardContent, Grid2 } from "@mui/material";
+import { Button, Card, CardContent } from "@mui/material";
 import { Descriptions } from "antd";
 import { useSelector } from "react-redux";
-import { useParams } from "react-router-dom";
-import EditableTextInput from "../../components/EditableTextInput";
+import { useParams, useNavigate } from "react-router-dom";
 import ModalWindow from "./ModalWindow";
 
 const items = [
@@ -46,7 +45,9 @@ const items = [
 
 function ItemDetailPage() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { token = "" } = useSelector((state) => state.personDetail);
+
   const [data, setData] = useState(null);
   const [modalState, setModalState] = useState(false);
 
@@ -69,17 +70,17 @@ function ItemDetailPage() {
     setModalState((prevState) => !prevState);
   };
 
-  // const renderInfoTable = () => {
-  //   return (
-  //     <Grid2 Grid2 container spacing={2}>
-  //       {items.map((item) => (
-  //         <Grid2 size={4}>
-  //           <EditableTextInput />
-  //         </Grid2>
-  //       ))}
-  //     </Grid2>
-  //   );
-  // };
+  const handleDeleteButton = () => {
+    fetch(`http://localhost:8080/inventory/selected/api/item/${id}`, {
+      method: "Delete",
+      headers: {
+        "Content-Type": "application/json",
+        // "Authorization": token
+      },
+    })
+      .then(() => navigate("/dashboard", { replace: true }))
+      .catch((err) => console.log(err));
+  };
 
   return (
     <>
@@ -94,7 +95,11 @@ function ItemDetailPage() {
           >
             Update
           </Button>
-          <Button variant="contained" style={{ margin: "10px" }}>
+          <Button
+            variant="contained"
+            onclick={handleDeleteButton}
+            style={{ margin: "10px" }}
+          >
             Delete
           </Button>
         </CardContent>

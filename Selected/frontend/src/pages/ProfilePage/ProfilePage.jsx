@@ -149,46 +149,6 @@ function ProfilePage() {
               />
             </Grid2>
             <Grid2 size={12}>
-              <EditableTextInput
-                editMode={editMode}
-                label="Email"
-                value={editInputs.email}
-                name="email"
-                id="email"
-                onChange={handleInputChanges}
-                error={errors.email}
-              />
-            </Grid2>
-            <Grid2 size={12}>
-              <EditableTextInput
-                editMode={editMode}
-                label="Password"
-                value={editInputs.password}
-                name="password"
-                id="password"
-                onChange={handleInputChanges}
-                type="password"
-              />
-            </Grid2>
-            {editMode && (
-              <Grid2 size={12}>
-                <EditableTextInput
-                  editMode={editMode}
-                  label="Confirm Password"
-                  value={editInputs.confirmPassword}
-                  name="confirmPassword"
-                  id="confirmPassword"
-                  onChange={handleInputChanges}
-                  type="password"
-                />
-              </Grid2>
-            )}
-            {errors.email && (
-              <Grid2 size={12}>
-                <Typography color="error">{errors.email}</Typography>
-              </Grid2>
-            )}
-            <Grid2 size={12}>
               <div className="ProfilePage__div__flex">
                 {!editMode && (
                   <Button variant="contained" onClick={handleEditButtonCLick}>

@@ -13,6 +13,7 @@ import { Alert, Flex } from "antd";
 import { useSelector } from "react-redux";
 
 import ModalWindow from "./ModalWindow";
+import { useNavigate } from "react-router-dom";
 
 const itemDetails = [
   {
@@ -48,7 +49,8 @@ const itemDetails = [
 ];
 
 function DashboardPage() {
-  const { token = "" } = useSelector((state) => state.personDetails);
+  const { token = "" } = useSelector((state) => state.personDetail);
+  const navigate = useNavigate();
   const [modalState, setModalState] = useState(false);
   const [data, setData] = useState(null);
 
@@ -67,6 +69,7 @@ function DashboardPage() {
 
   const handleViewMoreButton = (id) => {
     //TODO: handle reroute to item detail page
+    navigate(`/item/${id}`, { replace: true });
   };
 
   const handleModalPopup = () => {

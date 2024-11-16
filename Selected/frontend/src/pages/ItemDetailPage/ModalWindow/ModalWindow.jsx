@@ -61,7 +61,7 @@ function ModalWindow({ modalState, handleModalPopup }) {
     });
   };
 
-  const handleCreateButton = () => {
+  const handleUpdateButton = () => {
     const payload = {
       itemName: inputValues.itemName,
       vendorId: inputValues.vendorId,
@@ -90,9 +90,12 @@ function ModalWindow({ modalState, handleModalPopup }) {
     <Modal
       title="Add new item"
       open={modalState}
-      onOk={handleModalPopup}
+      onOk={() => {
+        handleUpdateButton();
+        handleModalPopup();
+      }}
       onCancel={handleCancelModal}
-      okText="Add"
+      okText="Update"
       cancelText="Cancel"
     >
       <Grid2 container spacing={2}>
