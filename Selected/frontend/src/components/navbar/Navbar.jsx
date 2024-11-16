@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 import MenuOutlinedIcon from "@mui/icons-material/MenuOutlined";
 import MenuIcon from "@mui/icons-material/Menu";
@@ -14,7 +14,7 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-
+import { useSelector } from "react-redux";
 import "@fontsource/roboto/300.css";
 import "@fontsource/roboto/400.css";
 import "@fontsource/roboto/500.css";
@@ -23,15 +23,21 @@ import "@fontsource/roboto/700.css";
 const pages = ["Dashboard"];
 
 function Navbar() {
+  const { userName } = useSelector((state) => state.personDetail);
   const navigate = useNavigate();
 
   const [anchorElNav, setAnchorElNav] = useState(null);
   const [anchorElUser, setAnchorElUser] = useState(null);
   const [isUserLoggedIn, setIsUserLoggedIn] = useState(false);
 
+  useEffect(() => {
+    if (userName.length > 0) setIsUserLoggedIn(true);
+  }, [userName]);
+
   const handleOpenNavMenu = (event) => {
     setAnchorElNav(event.currentTarget);
   };
+
   const handleOpenUserMenu = (event) => {
     setAnchorElUser(event.currentTarget);
   };
@@ -158,11 +164,6 @@ function Navbar() {
           </Toolbar>
         </Container>
       </AppBar>
-      <Box
-        sx={{
-          mt: 10,
-        }}
-      />
       <Outlet />
     </>
   );

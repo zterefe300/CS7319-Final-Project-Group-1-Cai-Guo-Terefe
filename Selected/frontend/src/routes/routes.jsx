@@ -1,4 +1,5 @@
 import { createBrowserRouter } from "react-router-dom";
+import { Box } from "@mui/material";
 
 import Navbar from "../components/navbar";
 import LoginSignInPage from "../pages/LoginSignInPage/LoginSignInPage";
@@ -15,23 +16,58 @@ const routes = createBrowserRouter([
       {
         path: "/",
         errorElement: <>404 Page not found</>,
-        element: <LoginSignInPage />,
+        element: (
+          <>
+            <Box
+              sx={{
+                mt: 10,
+              }}
+            />
+            <LoginSignInPage />
+          </>
+        ),
       },
       {
         path: "/signup",
-        element: <SignUpPage />,
+        element: (
+          <>
+            <Box
+              sx={{
+                mt: 10,
+              }}
+            />
+            <SignUpPage />
+          </>
+        ),
       },
       {
         path: "/profile/:id",
-        element: <ProfilePage />,
+        element: (
+          <>
+            <Box
+              sx={{
+                mt: 10,
+              }}
+            />
+            <ProfilePage />
+          </>
+        ),
       },
       {
         path: "/dashboard",
-        element: <DashboardPage />,
+        element: (
+          <>
+            <DashboardPage />
+          </>
+        ),
       },
       {
         path: "/item/:id",
-        element: <ItemDetailPage />,
+        element: (
+          <>
+            <ItemDetailPage />
+          </>
+        ),
       },
     ],
   },

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   Box,
   Button,
@@ -9,7 +9,10 @@ import {
   Grid2,
   Typography,
 } from "@mui/material";
-import { Alert, Flex, Statistic } from "antd";
+import { Alert, Flex } from "antd";
+import { useSelector } from "react-redux";
+
+import ModalWindow from "./ModalWindow";
 
 const itemDetails = [
   {
@@ -45,9 +48,30 @@ const itemDetails = [
 ];
 
 function DashboardPage() {
+  const { token = "" } = useSelector((state) => state.personDetails);
+  const [modalState, setModalState] = useState(false);
+  const [data, setData] = useState(null);
+
+  useEffect(() => {
+    fetch("http://localhost:8080/inventory/selected/api/items", {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": token,
+      },
+    })
+      .then((resp) => resp.json())
+      .then((resp) => setData(resp))
+      .catch((err) => console.log(err));
+  }, []);
+
   const handleViewMoreButton = (id) => {
     //TODO: handle reroute to item detail page
     console.log(id);
+  };
+
+  const handleModalPopup = () => {
+    setModalState((prevState) => !prevState);
   };
 
   const renderItemDetailCard = itemDetails.map((item) => {
@@ -91,9 +115,24 @@ function DashboardPage() {
   });
 
   return (
-    <Grid2 container spacing={2}>
-      {renderItemDetailCard}
-    </Grid2>
+    <>
+      <Flex justify="flex-end" align="center">
+        <Button
+          variant="contained"
+          style={{ margin: "10px" }}
+          onClick={handleModalPopup}
+        >
+          Add Item
+        </Button>
+      </Flex>
+      <Grid2 container spacing={2}>
+        {renderItemDetailCard}
+      </Grid2>
+      <ModalWindow
+        modalState={modalState}
+        handleModalPopup={handleModalPopup}
+      />
+    </>
   );
 }
 
