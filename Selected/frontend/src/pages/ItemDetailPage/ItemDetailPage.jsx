@@ -4,6 +4,7 @@ import { Descriptions } from "antd";
 import { useSelector } from "react-redux";
 import { useParams } from "react-router-dom";
 import EditableTextInput from "../../components/EditableTextInput";
+import ModalWindow from "./ModalWindow";
 
 const items = [
   {
@@ -47,6 +48,7 @@ function ItemDetailPage() {
   const { id } = useParams();
   const { token = "" } = useSelector((state) => state.personDetail);
   const [data, setData] = useState(null);
+  const [modalState, setModalState] = useState(false);
 
   useEffect(() => {
     fetch(`http://localhost:8080/inventory/selected/api/item/${id}`, {
@@ -63,17 +65,21 @@ function ItemDetailPage() {
       .catch((err) => console.log(err));
   }, []);
 
-  const renderInfoTable = () => {
-    return (
-      <Grid2 Grid2 container spacing={2}>
-        {items.map((item) => (
-          <Grid2 size={4}>
-            <EditableTextInput />
-          </Grid2>
-        ))}
-      </Grid2>
-    );
+  const handleModalPopup = () => {
+    setModalState((prevState) => !prevState);
   };
+
+  // const renderInfoTable = () => {
+  //   return (
+  //     <Grid2 Grid2 container spacing={2}>
+  //       {items.map((item) => (
+  //         <Grid2 size={4}>
+  //           <EditableTextInput />
+  //         </Grid2>
+  //       ))}
+  //     </Grid2>
+  //   );
+  // };
 
   return (
     <>
@@ -81,7 +87,11 @@ function ItemDetailPage() {
         <CardContent>
           <img src="https://www.colgateprofessional.com/content/dam/cp-sites/oral-care/professional2020/en-us/products/toothbrushes/colgate-360-toothbrush.png" />
           <Descriptions title="Item info" items={items} />
-          <Button variant="contained" style={{ margin: "10px" }}>
+          <Button
+            variant="contained"
+            onClick={handleModalPopup}
+            style={{ margin: "10px" }}
+          >
             Update
           </Button>
           <Button variant="contained" style={{ margin: "10px" }}>
@@ -89,6 +99,10 @@ function ItemDetailPage() {
           </Button>
         </CardContent>
       </Card>
+      <ModalWindow
+        modalState={modalState}
+        handleModalPopup={handleModalPopup}
+      />
     </>
   );
 }
