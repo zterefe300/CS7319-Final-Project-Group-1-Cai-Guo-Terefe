@@ -1,10 +1,11 @@
 import { createBrowserRouter } from "react-router-dom";
 
-import Navbar from "../components/navbar"
-import LoginSignInPage from "../pages/LoginSignInPage/LoginSignInPage";
-import SignUpPage from "../pages/SignUpPage/SignUpPage";
-import ProfilePage from "../pages/ProfilePage/ProfilePage";
-import DashboardPage from "../pages/DashboardPage"
+import Navbar from "../components/navbar";
+import LoginSignInPage from "../pages/LoginSignInPage";
+import SignUpPage from "../pages/SignUpPage";
+import ProfilePage from "../pages/ProfilePage";
+import DashboardPage from "../pages/DashboardPage";
+import ItemDetailPage from "../pages/ItemDetailPage";
 
 const routes = createBrowserRouter([
   {
@@ -14,22 +15,26 @@ const routes = createBrowserRouter([
       {
         path: "/",
         errorElement: <>404 Page not found</>,
-        element: <LoginSignInPage />
+        element: <LoginSignInPage />,
       },
       {
         path: "/signup",
-        element: <SignUpPage />
+        element: <SignUpPage />,
       },
       {
         path: "/profile/:id",
-        element: <ProfilePage />
+        element: <ProfilePage />,
       },
       {
         path: "/dashboard",
-        element: <DashboardPage />
-      }
-    ]
-  }
-])
+        element: <DashboardPage />,
+      },
+      {
+        path: "/itemDetail/:id",
+        element: <ItemDetailPage />,
+      },
+    ],
+  },
+]);
 
-export default routes; 
+export default routes;
