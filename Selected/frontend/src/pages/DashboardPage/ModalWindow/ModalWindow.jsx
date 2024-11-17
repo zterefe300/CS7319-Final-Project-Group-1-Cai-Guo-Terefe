@@ -80,10 +80,7 @@ function ModalWindow({ modalState, handleModalPopup }) {
     //   alarmThreshold: inputValues.alarmThreshold,
     //   picture: inputValues.picture,
     // };
-
-    // console.log("payload", payload)
-    console.log("formData", formData)
-    // console.log("JSON", JSON.stringify(payload))
+    
     fetch("http://localhost:8080/inventory/selected/api/items", {
       method: "POST",
       headers: {
