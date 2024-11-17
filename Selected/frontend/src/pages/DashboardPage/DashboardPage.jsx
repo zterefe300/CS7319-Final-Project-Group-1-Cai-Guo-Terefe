@@ -53,19 +53,23 @@ function DashboardPage() {
   const navigate = useNavigate();
   const [modalState, setModalState] = useState(false);
   const [data, setData] = useState(null);
+  const [triggerFetch, setTriggerFetch] = useState(true);
 
   useEffect(() => {
-    fetch("http://localhost:8080/inventory/selected/api/items", {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": token,
-      },
-    })
-      .then((resp) => resp.json())
-      .then((resp) => setData(resp))
-      .catch((err) => console.log(err));
-  }, []);
+    if (triggerFetch) {
+      setTriggerFetch(false);
+      fetch("http://localhost:8080/inventory/selected/api/items", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          // "Authorization": token,
+        },
+      })
+        .then((resp) => resp.json())
+        .then((resp) => setData(resp))
+        .catch((err) => console.log(err));
+    }
+  }, [triggerFetch]);
 
   const handleViewMoreButton = (id) => {
     //TODO: handle reroute to item detail page
