@@ -19,7 +19,8 @@ const VisuallyHiddenInput = styled("input")({
 });
 
 function ModalWindow({ modalState, handleModalPopup }) {
-  const { token = "" } = useSelector((state) => state.personDetail.token);
+  const { token = "" } = useSelector((state) => state.personDetail);
+
   const [inputValues, setInputValues] = useState({
     itemName: "",
     vendorId: null,
@@ -34,7 +35,7 @@ function ModalWindow({ modalState, handleModalPopup }) {
     const name = e.target.name;
     let value = e.target.value;
 
-    if (name === "vendorId") value = value ? Number(e.target.value) : null;
+    if (name === "vendorId") value = Number(e.target.value) ? Number(e.target.value) : null;
     setInputValues((prevState) => ({
       ...prevState,
       [name]: value,
@@ -62,23 +63,34 @@ function ModalWindow({ modalState, handleModalPopup }) {
   };
 
   const handleCreateButton = () => {
-    const payload = {
-      itemName: inputValues.itemName,
-      vendorId: inputValues.vendorId,
-      itemDescription: inputValues.itemDescription,
-      itemQuantity: inputValues.itemQuantity,
-      quantityThreshold: inputValues.quantityThreshold,
-      alarmThreshold: inputValues.alarmThreshold,
-      picture: inputValues.picture,
-    };
+    const formData = new FormData();
+    formData.append("itemName", inputValues.itemName)
+    formData.append("vendorId", Number(inputValues.vendorId))
+    formData.append("itemDescription", inputValues.itemDescription)
+    formData.append("itemQuantity", inputValues.itemQuantity)
+    formData.append("quantityThreshold", inputValues.quantityThreshold)
+    formData.append("alarmThreshold", inputValues.alarmThreshold)
+    formData.append("picture", inputValues.picture)
+    // const payload = {
+    //   itemName: inputValues.itemName,
+    //   vendorId: Number(inputValues.vendorId),
+    //   itemDescription: inputValues.itemDescription,
+    //   itemQuantity: inputValues.itemQuantity,
+    //   quantityThreshold: inputValues.quantityThreshold,
+    //   alarmThreshold: inputValues.alarmThreshold,
+    //   picture: inputValues.picture,
+    // };
 
+    // console.log("payload", payload)
+    console.log("formData", formData)
+    // console.log("JSON", JSON.stringify(payload))
     fetch("http://localhost:8080/inventory/selected/api/items", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "Authorization": token,
       },
-      body: payload,
+      body: formData,
     })
       .then(() => {
         handleModalPopup();
@@ -90,7 +102,10 @@ function ModalWindow({ modalState, handleModalPopup }) {
     <Modal
       title="Add new item"
       open={modalState}
-      onOk={handleModalPopup}
+      onOk={() => {
+        handleCreateButton()
+        handleModalPopup()
+      }}
       onCancel={handleCancelModal}
       okText="Add"
       cancelText="Cancel"

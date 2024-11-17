@@ -78,7 +78,7 @@ function ModalWindow({ modalState, handleModalPopup }) {
         "Content-Type": "application/json",
         // "Authorization": token,
       },
-      body: payload,
+      body: JSON.stringify(payload),
     })
       .then(() => {
         handleModalPopup();

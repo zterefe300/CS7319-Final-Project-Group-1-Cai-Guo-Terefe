@@ -52,11 +52,11 @@ function ItemDetailPage() {
   const [modalState, setModalState] = useState(false);
 
   useEffect(() => {
-    fetch(`http://localhost:8080/inventory/selected/api/item/${id}`, {
+    fetch(`http://localhost:8080/inventory/selected/api/items/${id}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        // "Authorization": token
+        "Authorization": token
       },
     })
       .then((resp) => resp.json())
@@ -71,7 +71,7 @@ function ItemDetailPage() {
   };
 
   const handleDeleteButton = () => {
-    fetch(`http://localhost:8080/inventory/selected/api/item/${id}`, {
+    fetch(`http://localhost:8080/inventory/selected/api/items/${id}`, {
       method: "Delete",
       headers: {
         "Content-Type": "application/json",
