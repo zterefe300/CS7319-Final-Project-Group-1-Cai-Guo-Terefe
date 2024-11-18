@@ -49,6 +49,9 @@ public class SecurityConfig {
 //            our public endpoints
                         .requestMatchers(HttpMethod.POST, "/api/auth/signup").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/v3/api-docs/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/swagger-ui/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/swagger-ui.html/**").permitAll()
 //            our private endpoints
                         .anyRequest().authenticated())
                 .authenticationManager(authenticationManager)
