@@ -72,21 +72,23 @@ function ModalWindow({ setTriggerFetch, modalState, handleModalPopup }) {
     formData.append("quantityReorderThreshold", inputValues.quantityThreshold);
     formData.append("quantityAlarmThreshold", inputValues.alarmThreshold);
     formData.append("pictureStream", inputValues.picture);
-    // const payload = {
-    //   itemName: inputValues.itemName,
-    //   vendorId: Number(inputValues.vendorId),
-    //   itemDescription: inputValues.itemDescription,
-    //   itemQuantity: inputValues.itemQuantity,
-    //   quantityThreshold: inputValues.quantityThreshold,
-    //   alarmThreshold: inputValues.alarmThreshold,
-    //   picture: inputValues.picture,
-    // };
+    const payload = {
+      name: inputValues.itemName,
+      vendorId: Number(inputValues.vendorId),
+      detail: inputValues.itemDescription,
+      quantity: inputValues.itemQuantity,
+      quantityReorderThreshold: inputValues.quantityThreshold,
+      quantityAlarmThreshold: inputValues.alarmThreshold,
+      picture: inputValues.picture,
+    };
 
+    console.log("formData", formData)
+    console.log("json", JSON.stringify(payload))
     fetch("http://localhost:8080/inventory/selected/api/items", {
       method: "POST",
       headers: {
-        // "Content-Type": "multipart/form-data",
-        Authorization: `Bearer ${token}`,
+        "Content-Type": "multipart/form-data",
+        "Authorization": `Bearer ${token}`,
       },
       body: formData,
     })

@@ -6,6 +6,7 @@ import com.selected.inventory_dashboard.dtovo.res.ReorderTrackerResponseWrapper;
 import com.selected.inventory_dashboard.service.interfaces.ItemService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -34,11 +35,21 @@ public class ItemController {
         return ResponseEntity.ok(itemService.getAllItemsWithLimit(limit));
     }
 
+//    @PostMapping
+//    public ResponseEntity<ItemResponse> createItem(@RequestBody ItemRequest itemRequest) {
+//        return ResponseEntity.ok(itemService.insertNewItem(itemRequest));
+//    }
     @PostMapping
-    public ResponseEntity<ItemResponse> createItem(@RequestBody ItemRequest itemRequest) {
+    public ResponseEntity<ItemResponse> createItem(@RequestParam("pictureStream") MultipartFile pictureStream,
+                                                   String name, String detail,
+                                                   Integer quantity,
+                                                   Integer quantityAlarmThreshold,
+                                                   Integer quantityReorderThreshold,
+                                                   Integer vendorId) {
+        ItemRequest itemRequest =new ItemRequest(name,detail,quantity,pictureStream,quantityAlarmThreshold,quantityReorderThreshold,vendorId);
+
         return ResponseEntity.ok(itemService.insertNewItem(itemRequest));
     }
-
     @PutMapping("/{itemId}")
     public ResponseEntity<ItemResponse> updateItem(@PathVariable Integer itemId, @RequestBody ItemRequest itemRequest) {
         return ResponseEntity.ok(itemService.updateItem(itemId, itemRequest));
