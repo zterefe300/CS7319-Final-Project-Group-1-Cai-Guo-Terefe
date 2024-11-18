@@ -54,6 +54,7 @@ function DashboardPage() {
   const [modalState, setModalState] = useState(false);
   const [data, setData] = useState(null);
   const [triggerFetch, setTriggerFetch] = useState(true);
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     if (triggerFetch) {
@@ -62,11 +63,14 @@ function DashboardPage() {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
-          // "Authorization": token,
+          "Authorization": `Bearer ${token}`,
         },
       })
         .then((resp) => resp.json())
-        .then((resp) => setData(resp))
+        .then((resp) => {
+          setData(resp)
+          setLoading(false)
+        })
         .catch((err) => console.log(err));
     }
   }, [triggerFetch]);
@@ -80,11 +84,11 @@ function DashboardPage() {
     setModalState((prevState) => !prevState);
   };
 
-  const renderItemDetailCard = itemDetails.map((item) => {
+  const renderItemDetailCard = data?.map((item) => {
     return (
       <Grid2 size={4} key={item.id}>
         <Card variant="outlined" sx={{ backgroundColor: "#fafafa" }}>
-          <CardMedia component="img" height="140" image={item.pics} />
+          <CardMedia component="img" height="140" image={item.pictureUrl} />
           <CardContent>
             <Flex justify="space-between">
               <Typography gutterBottom variant="h5" component="div">
@@ -109,7 +113,7 @@ function DashboardPage() {
             />
             <Button
               variant="contained"
-              onClick={() => handleViewMoreButton(item.id)}
+              onClick={() => handleViewMoreButton(item.itemId)}
               size="medium"
             >
               View More
@@ -132,9 +136,10 @@ function DashboardPage() {
         </Button>
       </Flex>
       <Grid2 container spacing={2}>
-        {renderItemDetailCard}
+        {loading ? <Typography variant="h3" gutterBottom>Loading...</Typography> : renderItemDetailCard}
       </Grid2>
       <ModalWindow
+        setTriggerFetch={setTriggerFetch}
         modalState={modalState}
         handleModalPopup={handleModalPopup}
       />

@@ -65,13 +65,13 @@ function ModalWindow({ setTriggerFetch, modalState, handleModalPopup }) {
 
   const handleCreateButton = () => {
     const formData = new FormData();
-    formData.append("itemName", inputValues.itemName);
+    formData.append("name", inputValues.itemName);
     formData.append("vendorId", Number(inputValues.vendorId));
-    formData.append("itemDescription", inputValues.itemDescription);
-    formData.append("itemQuantity", inputValues.itemQuantity);
-    formData.append("quantityThreshold", inputValues.quantityThreshold);
-    formData.append("alarmThreshold", inputValues.alarmThreshold);
-    formData.append("picture", inputValues.picture);
+    formData.append("detail", inputValues.itemDescription);
+    formData.append("quantity", inputValues.itemQuantity);
+    formData.append("quantityReorderThreshold", inputValues.quantityThreshold);
+    formData.append("quantityAlarmThreshold", inputValues.alarmThreshold);
+    formData.append("pictureStream", inputValues.picture);
     // const payload = {
     //   itemName: inputValues.itemName,
     //   vendorId: Number(inputValues.vendorId),
@@ -85,12 +85,13 @@ function ModalWindow({ setTriggerFetch, modalState, handleModalPopup }) {
     fetch("http://localhost:8080/inventory/selected/api/items", {
       method: "POST",
       headers: {
-        "Content-Type": "application/json",
-        Authorization: token,
+        // "Content-Type": "multipart/form-data",
+        Authorization: `Bearer ${token}`,
       },
       body: formData,
     })
       .then(() => {
+        console.log("Post Success")
         handleModalPopup();
         setTriggerFetch(true);
       })

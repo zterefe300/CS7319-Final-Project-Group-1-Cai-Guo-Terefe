@@ -52,16 +52,16 @@ function ItemDetailPage() {
   const [modalState, setModalState] = useState(false);
 
   useEffect(() => {
-    fetch(`http://localhost:8080/inventory/selected/api/items/${id}`, {
-      method: "POST",
+    fetch(`http://localhost:8080/inventory/selected/api/items`, {
+      method: "GET",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": token
+        "Authorization": `Bearer ${token}`
       },
     })
       .then((resp) => resp.json())
       .then((resp) => {
-        setData(resp);
+        setData(() => resp.filter(item => item.itemId === id));
       })
       .catch((err) => console.log(err));
   }, []);
@@ -71,11 +71,12 @@ function ItemDetailPage() {
   };
 
   const handleDeleteButton = () => {
+    console.log("clicked")
     fetch(`http://localhost:8080/inventory/selected/api/items/${id}`, {
-      method: "Delete",
+      method: "DELETE",
       headers: {
         "Content-Type": "application/json",
-        // "Authorization": token
+        "Authorization": `Bearer ${token}`
       },
     })
       .then(() => navigate("/dashboard", { replace: true }))
@@ -97,7 +98,7 @@ function ItemDetailPage() {
           </Button>
           <Button
             variant="contained"
-            onclick={handleDeleteButton}
+            onClick={handleDeleteButton}
             style={{ margin: "10px" }}
           >
             Delete
