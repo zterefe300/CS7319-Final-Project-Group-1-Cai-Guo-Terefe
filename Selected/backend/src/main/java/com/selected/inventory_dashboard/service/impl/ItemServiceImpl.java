@@ -140,6 +140,12 @@ public class ItemServiceImpl implements ItemService {
         return new ReorderTrackerResponseWrapper(successfullyReorderedItems, itemsFailedToReorder);
     }
 
+    @Override
+    public boolean updateStock(int itemId, int quantity) {
+        int update = stockRecordMapper.updateQuantity(itemId, quantity);
+        return update>0;
+    }
+
     private void validateVendorData(final Integer vendorId) {
         if (vendorId == null) {
             throw new NoVendorDataException();

@@ -46,7 +46,7 @@ public class SecurityConfig {
 //        Set permissions on endpoints
                 .authorizeHttpRequests(auth -> auth
 //            our public endpoints
-                        .requestMatchers(HttpMethod.GET,"*").permitAll()//todo
+                        .requestMatchers(HttpMethod.POST,"/openApi/checkout").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/signup").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
 //            our private endpoints
