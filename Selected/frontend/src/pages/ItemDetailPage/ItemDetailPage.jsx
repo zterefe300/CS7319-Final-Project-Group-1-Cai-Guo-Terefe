@@ -1,47 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { Button, Card, CardContent } from "@mui/material";
+import { Button, Card, CardContent, Typography } from "@mui/material";
 import { Descriptions } from "antd";
 import { useSelector } from "react-redux";
 import { useParams, useNavigate } from "react-router-dom";
-import ModalWindow from "./ModalWindow";
 
-const items = [
-  {
-    key: "1",
-    label: "Item Name",
-    children: "ToothBrush",
-  },
-  {
-    key: "2",
-    label: "Quantity",
-    children: "5",
-  },
-  {
-    key: "3",
-    label: "Item Description",
-    children: "Item Description",
-  },
-  {
-    key: "4",
-    label: "Vendor Id",
-    children: "10",
-  },
-  {
-    key: "5",
-    label: "Name",
-    children: "Vendor A",
-  },
-  {
-    key: "6",
-    label: "email",
-    children: "vendor@email.com",
-  },
-  {
-    key: "7",
-    label: "phone",
-    children: "+1 (555) 555-5555",
-  },
-];
+import { itemsMapper } from "./helper";
+import ModalWindow from "./ModalWindow";
 
 function ItemDetailPage() {
   const { id } = useParams();
@@ -50,6 +14,8 @@ function ItemDetailPage() {
 
   const [data, setData] = useState(null);
   const [modalState, setModalState] = useState(false);
+  const [photo, setPhoto] = useState(null)
+  const [ loading, setLoading] = useState(true)
 
   useEffect(() => {
     fetch(`http://localhost:8080/inventory/selected/api/items`, {
@@ -61,7 +27,10 @@ function ItemDetailPage() {
     })
       .then((resp) => resp.json())
       .then((resp) => {
-        setData(() => resp.filter(item => item.itemId === id));
+        const getItemData = resp.filter(item => item.itemId === Number(id))[0]
+        setPhoto(getItemData.pictures)
+        setData(itemsMapper(getItemData))
+        setLoading(false)
       })
       .catch((err) => console.log(err));
   }, []);
@@ -83,12 +52,18 @@ function ItemDetailPage() {
       .catch((err) => console.log(err));
   };
 
+  if(loading){
+    return (
+      <Typography variant="h3" gutterBottom>Loading...</Typography>
+    )
+  }
+
   return (
     <>
       <Card Card variant="outlined" sx={{ backgroundColor: "#fafafa" }}>
         <CardContent>
-          <img src="https://www.colgateprofessional.com/content/dam/cp-sites/oral-care/professional2020/en-us/products/toothbrushes/colgate-360-toothbrush.png" />
-          <Descriptions title="Item info" items={items} />
+          <img src={photo} />
+          <Descriptions title="Item info" items={data} />
           <Button
             variant="contained"
             onClick={handleModalPopup}
