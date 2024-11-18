@@ -74,7 +74,8 @@ public class ItemServiceImpl implements ItemService {
 
         final MultipartFile pictureStream = itemRequest.pictureStream();
         //TODO: Pass custom name with the item id.
-        final String itemPicturesRootUrl = insertOrUpdatePictureAndGetUrl(pictureStream);
+        final String itemPicturesRootUrl =  Optional.ofNullable(insertOrUpdatePictureAndGetUrl(pictureStream))
+                .orElse("");
 
         Integer itemId = itemMapper.insert(buildItemFromItemRequest(itemRequest, itemPicturesRootUrl, vendorId));
         final Item item = itemMapper.selectByPrimaryKey(itemId);
