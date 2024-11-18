@@ -13,4 +13,6 @@ public interface ItemService {
     ItemResponse updateItem(Integer itemId, ItemRequest itemRequest);
     boolean deleteItem(Integer itemId);
     ReorderTrackerResponseWrapper reorderItemsLowStockItems();
+
+    boolean updateStock(int itemId, int quantity);
 }
