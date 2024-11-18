@@ -306,6 +306,22 @@ public class Dao {
         return stockRecords;
     }
 
+    public boolean updateStock(int itemId, int quantity){
+        String sql = "UPDATE stock_record SET quantity = quantity-? WHERE item_id = ? and  quantity >= ?";
+        int update=0;
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, quantity);
+            stmt.setInt(2, itemId);
+            stmt.setInt(3, quantity);
+            update=stmt.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+        return update>0;
+    }
+
 
 
     //----------------------------------User------------------------------------------------------------------------------
