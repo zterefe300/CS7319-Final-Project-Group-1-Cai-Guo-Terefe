@@ -14,7 +14,10 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import { resetPersonDetail } from "../../redux/PersonSlice/personSlice";
+
+
 import "@fontsource/roboto/300.css";
 import "@fontsource/roboto/400.css";
 import "@fontsource/roboto/500.css";
@@ -23,7 +26,8 @@ import "@fontsource/roboto/700.css";
 const pages = ["Dashboard", "Tracking"];
 
 function Navbar() {
-  const { userName = "soem" } = useSelector((state) => state.personDetail);
+  const { userName = "" } = useSelector((state) => state.personDetail);
+  const dispatch = useDispatch();
   const navigate = useNavigate();
 
   const [anchorElNav, setAnchorElNav] = useState(null);
@@ -31,7 +35,11 @@ function Navbar() {
   const [isUserLoggedIn, setIsUserLoggedIn] = useState(false);
 
   useEffect(() => {
-    if (userName.length > 0) setIsUserLoggedIn(true);
+    if (userName.length > 0) {
+      setIsUserLoggedIn(true)
+    } else {
+      setIsUserLoggedIn(false)
+    }
   }, [userName]);
 
   const handleOpenNavMenu = (event) => {
@@ -65,7 +73,9 @@ function Navbar() {
   };
 
   const handleLogoutClick = () => {
+    dispatch(resetPersonDetail())
     handleCloseUserMenu();
+    navigate("/", { replace: true });
   };
 
   const handleProfilePageClick = () => {

@@ -11,9 +11,13 @@ export const personSlice = createSlice({
       state.userName = actions.payload.userName;
       state.token = actions.payload.token;
     },
+    resetPersonDetail: (state) => {
+      state.userName = "";
+      state.token = "";
+    }
   },
 });
 
-export const { setPersonDetail } = personSlice.actions;
+export const { setPersonDetail, resetPersonDetail } = personSlice.actions;
 
 export default personSlice.reducer;

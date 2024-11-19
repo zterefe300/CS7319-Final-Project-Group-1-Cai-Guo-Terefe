@@ -63,7 +63,7 @@ function DashboardPage() {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          "Authorization": `Bearer ${token}`,
         },
       })
         .then((resp) => resp.json())
@@ -85,8 +85,24 @@ function DashboardPage() {
   };
 
   const renderItemDetailCard = data?.map((item) => {
+    let photo = ""
+    fetch(`http://localhost:8080/inventory/selected/images/${item.pictureUrl}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
+      },
+    })
+      .then((resp) => resp.json())
+      .then((resp) => {
+        console.log("itemId", item.itemId)
+        console.log("photo", resp)
+        photo = resp;
+      })
+      .catch((err) => console.log(err));
+  
     return (
-      <Grid2 size={4} key={item.id}>
+      <Grid2 size={4} key={item.itemId}>
         <Card variant="outlined" sx={{ backgroundColor: "#fafafa" }}>
           <CardMedia component="img" height="140" image={item.pictureUrl} />
           <CardContent>
