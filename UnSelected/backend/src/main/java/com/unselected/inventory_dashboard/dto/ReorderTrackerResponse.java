@@ -1,5 +1,5 @@
 package com.unselected.inventory_dashboard.dto;
 
-import com.unselected.inventory_dashboard.constants.ReorderStatus;
+import java.util.Date;
 
-public record ReorderTrackerResponse(Integer itemId, Integer vendorId, ReorderStatus reorderStatus, String errorMessage) { }
+public record ReorderTrackerResponse(Integer itemId, Integer vendorId, String reorderStatus, String errorMessage, Date effectiveDate) { }
