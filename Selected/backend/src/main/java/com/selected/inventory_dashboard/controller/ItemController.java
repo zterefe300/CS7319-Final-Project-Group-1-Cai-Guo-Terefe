@@ -1,6 +1,7 @@
 package com.selected.inventory_dashboard.controller;
 
 import com.selected.inventory_dashboard.dtovo.req.ItemRequest;
+import com.selected.inventory_dashboard.dtovo.req.ReorderTrackerRequest;
 import com.selected.inventory_dashboard.dtovo.res.ItemResponse;
 import com.selected.inventory_dashboard.dtovo.res.ReorderTrackerResponse;
 import com.selected.inventory_dashboard.dtovo.res.ReorderTrackerResponseWrapper;
@@ -51,8 +52,8 @@ public class ItemController {
     }
 
     @PutMapping("/fulfillItemReorder/{itemId}")
-    public ResponseEntity<Void> fulfillItemReorder(@PathVariable Integer itemId) {
-        return null;
+    public ResponseEntity<ReorderTrackerResponse> fulfillItemReorder(@RequestBody ReorderTrackerRequest reorderTrackerRequest) {
+        return ResponseEntity.ok(itemService.fulfillItemReorder(reorderTrackerRequest));
     }
 
     @PutMapping("/reorder")
