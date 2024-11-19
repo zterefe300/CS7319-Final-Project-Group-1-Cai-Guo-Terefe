@@ -14,7 +14,7 @@
       and status = #{status,jdbcType=INTEGER}
       and date = #{date,jdbcType=TIMESTAMP}
   </delete>
-  <insert id="insert" parameterType="com.selected.inventory_dashboard.persistence.entity.ReorderTracker">
+  <insert id="insert" parameterType="com.selected.inventory_dashboard.persistence.entity.ReorderTracker" useGeneratedKeys="true" keyColumn="id" keyProperty="id">
     insert into reorder_tracker (item_id, status, date, 
       vendor_id, error_message)
     values (#{itemId,jdbcType=INTEGER}, #{status,jdbcType=INTEGER}, #{date,jdbcType=TIMESTAMP},

@@ -36,7 +36,9 @@ public class VendorServiceImpl implements VendorService {
         validateVendorNameExistence(vendorRequest);
         validateVendorContactInfoExistence(vendorRequest);
 
-        final Integer vendorId = vendorMapper.insert(buildVendor(vendorRequest));
+        final Vendor vendorToCreate = buildVendor(vendorRequest);
+        vendorMapper.insert(vendorToCreate);
+        final Integer vendorId = vendorToCreate.getId();
         return mapVendorToVendorResponse(vendorMapper.selectByPrimaryKey(vendorId));
     }
 
