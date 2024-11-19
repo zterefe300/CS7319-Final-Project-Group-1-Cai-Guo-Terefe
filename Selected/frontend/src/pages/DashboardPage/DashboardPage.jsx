@@ -85,7 +85,7 @@ function DashboardPage() {
   };
 
   const renderItemDetailCard = data?.map((item) => {
-    console.log('item', item)
+    console.log("item", item);
     return (
       <Grid2 size={4} key={item.id}>
         <Card variant="outlined" sx={{ backgroundColor: "#fafafa" }}>
@@ -137,7 +137,7 @@ function DashboardPage() {
         </Button>
       </Flex>
       <Grid2 container spacing={2}>
-        {false ? (
+        {loading ? (
           <Typography variant="h3" gutterBottom>
             Loading...
           </Typography>

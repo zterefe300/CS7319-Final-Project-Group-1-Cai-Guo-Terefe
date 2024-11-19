@@ -23,7 +23,7 @@ function ModalWindow({ setTriggerFetch, modalState, handleModalPopup }) {
 
   const [inputValues, setInputValues] = useState({
     itemName: "",
-    vendorId: null,
+    vendorId: "",
     itemDescription: "",
     itemQuantity: 0,
     quantityThreshold: 0,
@@ -54,7 +54,7 @@ function ModalWindow({ setTriggerFetch, modalState, handleModalPopup }) {
     handleModalPopup();
     setInputValues({
       itemName: "",
-      vendorId: null,
+      vendorId: "",
       itemDescription: "",
       itemQuantity: 0,
       quantityThreshold: 0,
@@ -86,19 +86,19 @@ function ModalWindow({ setTriggerFetch, modalState, handleModalPopup }) {
       quantity: inputValues.itemQuantity,
       quantityReorderThreshold: inputValues.quantityThreshold,
       quantityAlarmThreshold: inputValues.alarmThreshold,
-      picture: inputValues.picture,
+      pictureBase64: inputValues.picture,
     };
 
     fetch("http://localhost:8080/inventory/selected/api/items", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        // "Authorization": `Bearer ${token}`,
+        Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify(payload),
     })
       .then(() => {
-        console.log("Post Success");
+        handleCancelModal();
         handleModalPopup();
         setTriggerFetch(true);
       })
