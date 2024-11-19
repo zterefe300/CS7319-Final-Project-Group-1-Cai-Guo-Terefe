@@ -131,7 +131,7 @@ function Navbar() {
               </Menu>
             </Box>
 
-            {true && (
+            {isUserLoggedIn && (
               <>
                 <Box sx={{ flexGrow: 1, display: { xs: "none", md: "flex" } }}>
                   {pages.map((page) => (
