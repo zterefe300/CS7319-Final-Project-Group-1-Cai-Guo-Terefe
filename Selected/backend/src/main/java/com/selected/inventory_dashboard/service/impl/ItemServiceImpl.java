@@ -24,7 +24,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.time.Instant;
 import java.util.*;
@@ -72,9 +71,9 @@ public class ItemServiceImpl implements ItemService {
         final Integer vendorId = itemRequest.vendorId();
         validateVendorData(vendorId);
 
-        final MultipartFile pictureStream = itemRequest.pictureStream();
-        //TODO: Pass custom name with the item id.
-        final String itemPicturesRootUrl =  Optional.ofNullable(insertOrUpdatePictureAndGetUrl(pictureStream))
+        final String pictureBase64 = itemRequest.pictureBase64();
+        final String itemPicturesRootUrl =  Optional.ofNullable(insertPictureAndGetUrl(pictureBase64,
+                        createItemPictureName(itemRequest.name(), itemRequest.vendorId())))
                 .orElse("");
 
         Integer itemId = itemMapper.insert(buildItemFromItemRequest(itemRequest, itemPicturesRootUrl, vendorId));
@@ -100,7 +99,8 @@ public class ItemServiceImpl implements ItemService {
         final Integer vendorId = itemRequest.vendorId();
         validateVendorData(vendorId);
 
-        final String updatedPictureFileUrl = insertOrUpdatePictureAndGetUrl(itemRequest.pictureStream());
+        final String updatedPictureFileUrl = insertPictureAndGetUrl(itemRequest.pictureBase64(),
+                createItemPictureName(itemRequest.name(), itemRequest.vendorId()));
         final Item itemWithUpdates = buildItemFromItemRequest(itemRequest, updatedPictureFileUrl, vendorId);
 
         //Update item
@@ -145,6 +145,11 @@ public class ItemServiceImpl implements ItemService {
         int update = stockRecordMapper.updateQuantity(itemId, quantity);
         return update>0;
     }
+
+//    @Override
+//    public List<ReorderTrackerResponse> getReorderTrackerData() {
+//        return reorderTrackerMapper.selectAll();
+//    }
 
     private void validateVendorData(final Integer vendorId) {
         if (vendorId == null) {
@@ -203,9 +208,10 @@ public class ItemServiceImpl implements ItemService {
         return itemBuilder.build();
     }
 
-    private String insertOrUpdatePictureAndGetUrl(final MultipartFile pictureFile) {
-        if (pictureFile != null) {
-            return fileUploaderServiceCoordinator.uploadPicture(pictureFile, "");
+    private String insertPictureAndGetUrl(final String itemPictureBase64, final String itemPictureName) {
+        if (itemPictureBase64 != null) {
+
+            return fileUploaderServiceCoordinator.uploadPicture(itemPictureBase64, itemPictureName);
         }
         return null;
     }
@@ -232,5 +238,9 @@ public class ItemServiceImpl implements ItemService {
             return new
                     ReorderTrackerResponse(item.getId(), item.getVendorId(), ReorderStatus.FAILED, e.getMessage());
         }
+    }
+
+    private String createItemPictureName(final String itemName,final Integer vendorId) {
+        return  String.format("%s-%s-%s.%s", itemName, vendorId, System.currentTimeMillis(), "jpg");
     }
 }
