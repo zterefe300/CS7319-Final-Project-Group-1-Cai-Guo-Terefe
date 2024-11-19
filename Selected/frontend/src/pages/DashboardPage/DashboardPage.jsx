@@ -85,21 +85,21 @@ function DashboardPage() {
   };
 
   const renderItemDetailCard = data?.map((item) => {
-    let photo = ""
-    fetch(`http://localhost:8080/inventory/selected/images/${item.pictureUrl}`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`,
-      },
-    })
-      .then((resp) => resp.json())
-      .then((resp) => {
-        console.log("itemId", item.itemId)
-        console.log("photo", resp)
-        photo = resp;
-      })
-      .catch((err) => console.log(err));
+    // let photo = ""
+    // fetch(`http://localhost:8080/inventory/selected/images/${item.pictureUrl}`, {
+    //   method: "GET",
+    //   headers: {
+    //     "Content-Type": "application/json",
+    //     "Authorization": `Bearer ${token}`,
+    //   },
+    // })
+    //   .then((resp) => resp.json())
+    //   .then((resp) => {
+    //     console.log("itemId", item.itemId)
+    //     console.log("photo", resp)
+    //     photo = resp;
+    //   })
+    //   .catch((err) => console.log(err));
   
     return (
       <Grid2 size={4} key={item.itemId}>

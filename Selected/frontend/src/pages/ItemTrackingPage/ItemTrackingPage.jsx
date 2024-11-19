@@ -42,7 +42,7 @@ function ItemTrackingPage() {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  const fetchTrackingOrder = () => {
     fetch(
       "http://localhost:8080/inventory/selected/api/items/reorderTrackerData",
       {
@@ -54,16 +54,22 @@ function ItemTrackingPage() {
     )
       .then((resp) => resp.json())
       .then((resp) => {
+        const filterData = resp.filter(item => item.reorderStatus !== "Reordered")
         setLoading(false);
-        setData(resp);
+        setData(filterData);
       })
       .catch((err) => console.log(err));
+  }
+
+  useEffect(() => {
+   fetchTrackingOrder()
   }, []);
 
   const handleUpdateButton = (itemId) => {
+    const itemData = data.filter(item => item.itemId === itemId)
+
     const payload = {
-      itemId: itemId,
-      reorderStatus: "Fulfilled",
+      ...itemData
     };
     
     fetch("http://localhost:8080/inventory/selected/api/items", {
@@ -74,7 +80,7 @@ function ItemTrackingPage() {
       },
       body: JSON.stringify(payload),
     })
-      .then(() => {})
+      .then(() => fetchTrackingOrder())
       .catch((err) => console.log(err));
   };
 
@@ -93,6 +99,14 @@ function ItemTrackingPage() {
       title: "Status",
       dataIndex: "reorderStatus",
       key: "reorderStatus",
+      render: (reorderStatus) =>{
+        console.log(reorderStatus.toLowerCase().split(""))
+        const wordSplitArray = reorderStatus.toLowerCase().split("")
+        const firstLetter = wordSplitArray[0].toUpperCase();
+        const restOfWord = wordSplitArray.slice(1, wordSplitArray.length)
+        return (
+        <>{[...firstLetter, ...restOfWord]}</>
+      )},
     },
     {
       title: "Update",
