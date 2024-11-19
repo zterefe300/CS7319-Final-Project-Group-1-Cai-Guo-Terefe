@@ -8,9 +8,12 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Base64;
 
 @Service
 public class LocalPictureFileUploadServiceImpl implements PictureFileUploader {
@@ -62,6 +65,33 @@ public class LocalPictureFileUploadServiceImpl implements PictureFileUploader {
         }
 
         return Files.exists(filePath);
+    }
+
+    @Override
+    public String savePictureFile(final String imageBase64, final  String customFileName) {
+        final String base64ImageWithOutPrefix = imageBase64.startsWith("data:image") ?
+                imageBase64.substring(imageBase64.indexOf(",") + 1) : imageBase64;
+
+        final Path path = Path.of(uploadDirectory);
+        try {
+            createDIrIfNotExists(path);
+        } catch (IOException e) {
+            throw PictureFileUploadException.failedToCreateDirException(e.getMessage());
+        }
+        final String fileName = customFileName == null || customFileName.isEmpty() ? String.format("default-image-name-%s.%s",
+                System.currentTimeMillis(), "jpg") : customFileName;
+
+        try {
+            byte[] decBytes = Base64.getDecoder().decode(base64ImageWithOutPrefix);
+            File outputeFile = new File(uploadDirectory + fileName);
+            try(FileOutputStream fos = new FileOutputStream(outputeFile)) {
+                fos.write(decBytes);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
+
+        return fileName;
     }
 
     private void createDIrIfNotExists(final Path path) throws IOException {
