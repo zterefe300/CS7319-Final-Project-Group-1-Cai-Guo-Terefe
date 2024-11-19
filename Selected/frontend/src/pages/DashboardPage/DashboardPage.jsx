@@ -54,7 +54,7 @@ function DashboardPage() {
   const [modalState, setModalState] = useState(false);
   const [data, setData] = useState(null);
   const [triggerFetch, setTriggerFetch] = useState(true);
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (triggerFetch) {
@@ -63,13 +63,13 @@ function DashboardPage() {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
       })
         .then((resp) => resp.json())
         .then((resp) => {
-          setData(resp)
-          setLoading(false)
+          setData(resp);
+          setLoading(false);
         })
         .catch((err) => console.log(err));
     }
@@ -136,7 +136,13 @@ function DashboardPage() {
         </Button>
       </Flex>
       <Grid2 container spacing={2}>
-        {loading ? <Typography variant="h3" gutterBottom>Loading...</Typography> : renderItemDetailCard}
+        {false ? (
+          <Typography variant="h3" gutterBottom>
+            Loading...
+          </Typography>
+        ) : (
+          renderItemDetailCard
+        )}
       </Grid2>
       <ModalWindow
         setTriggerFetch={setTriggerFetch}

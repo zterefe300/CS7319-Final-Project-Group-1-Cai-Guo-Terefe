@@ -63,15 +63,22 @@ function ModalWindow({ setTriggerFetch, modalState, handleModalPopup }) {
     });
   };
 
+  const convertImgToBase64 = (file) => {
+    return new Promise((resolve, reject) => {
+      const fileReader = new FileReader();
+      fileReader.readAsDataURL(file);
+
+      fileReader.onload = () => {
+        resolve(fileReader.result);
+      };
+
+      fileReader.onerror = (error) => {
+        reject(error);
+      };
+    });
+  };
+
   const handleCreateButton = () => {
-    const formData = new FormData();
-    formData.append("name", inputValues.itemName);
-    formData.append("vendorId", Number(inputValues.vendorId));
-    formData.append("detail", inputValues.itemDescription);
-    formData.append("quantity", inputValues.itemQuantity);
-    formData.append("quantityReorderThreshold", inputValues.quantityThreshold);
-    formData.append("quantityAlarmThreshold", inputValues.alarmThreshold);
-    formData.append("pictureStream", inputValues.picture);
     const payload = {
       name: inputValues.itemName,
       vendorId: Number(inputValues.vendorId),
@@ -82,18 +89,16 @@ function ModalWindow({ setTriggerFetch, modalState, handleModalPopup }) {
       picture: inputValues.picture,
     };
 
-    console.log("formData", formData)
-    console.log("json", JSON.stringify(payload))
     fetch("http://localhost:8080/inventory/selected/api/items", {
       method: "POST",
       headers: {
-        "Content-Type": "multipart/form-data",
-        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json",
+        // "Authorization": `Bearer ${token}`,
       },
-      body: formData,
+      body: JSON.stringify(payload),
     })
       .then(() => {
-        console.log("Post Success")
+        console.log("Post Success");
         handleModalPopup();
         setTriggerFetch(true);
       })
@@ -200,6 +205,7 @@ function ModalWindow({ setTriggerFetch, modalState, handleModalPopup }) {
             />
           </Flex>
         </Grid2>
+        <Grid2></Grid2>
         <Grid2 size={12}>
           <Button
             component="label"
@@ -208,15 +214,16 @@ function ModalWindow({ setTriggerFetch, modalState, handleModalPopup }) {
             tabIndex={-1}
             startIcon={<CloudUploadIcon />}
           >
-            Upload files
+            Upload Photo
             <VisuallyHiddenInput
               type="file"
-              onChange={(event) =>
+              onChange={async (event) => {
+                const file = await convertImgToBase64(event.target.files[0]);
                 setInputValues((prevState) => ({
                   ...prevState,
-                  picture: event.target.files,
-                }))
-              }
+                  picture: file,
+                }));
+              }}
               multiple
             />
           </Button>

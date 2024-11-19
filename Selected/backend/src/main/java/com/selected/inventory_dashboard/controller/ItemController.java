@@ -35,21 +35,11 @@ public class ItemController {
         return ResponseEntity.ok(itemService.getAllItemsWithLimit(limit));
     }
 
-//    @PostMapping
-//    public ResponseEntity<ItemResponse> createItem(@RequestBody ItemRequest itemRequest) {
-//        return ResponseEntity.ok(itemService.insertNewItem(itemRequest));
-//    }
     @PostMapping
-    public ResponseEntity<ItemResponse> createItem(@RequestParam("pictureStream") MultipartFile pictureStream,
-                                                   String name, String detail,
-                                                   Integer quantity,
-                                                   Integer quantityAlarmThreshold,
-                                                   Integer quantityReorderThreshold,
-                                                   Integer vendorId) {
-        ItemRequest itemRequest =new ItemRequest(name,detail,quantity,pictureStream,quantityAlarmThreshold,quantityReorderThreshold,vendorId);
-
+    public ResponseEntity<ItemResponse> createItem(@RequestBody ItemRequest itemRequest) {
         return ResponseEntity.ok(itemService.insertNewItem(itemRequest));
     }
+    
     @PutMapping("/{itemId}")
     public ResponseEntity<ItemResponse> updateItem(@PathVariable Integer itemId, @RequestBody ItemRequest itemRequest) {
         return ResponseEntity.ok(itemService.updateItem(itemId, itemRequest));

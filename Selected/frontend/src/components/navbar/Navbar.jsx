@@ -20,10 +20,10 @@ import "@fontsource/roboto/400.css";
 import "@fontsource/roboto/500.css";
 import "@fontsource/roboto/700.css";
 
-const pages = ["Dashboard"];
+const pages = ["Dashboard", "Tracking"];
 
 function Navbar() {
-  const { userName } = useSelector((state) => state.personDetail);
+  const { userName = "soem" } = useSelector((state) => state.personDetail);
   const navigate = useNavigate();
 
   const [anchorElNav, setAnchorElNav] = useState(null);
@@ -43,8 +43,22 @@ function Navbar() {
   };
 
   const handleCloseNavMenu = () => {
+    setAnchorElUser(null);
+  };
+
+  const handleRedirect = (pageName) => {
+    console.log("pageName", pageName);
     setAnchorElNav(null);
-    navigate("/dashboard", { replace: true });
+    switch (pageName) {
+      case "Dashboard":
+        navigate("/dashboard", { replace: true });
+        break;
+      case "Tracking":
+        navigate("/track", { replace: true });
+        break;
+      default:
+        break;
+    }
   };
 
   const handleCloseUserMenu = () => {
@@ -105,22 +119,25 @@ function Navbar() {
                 onClose={handleCloseNavMenu}
                 sx={{ display: { xs: "block", md: "none" } }}
               >
-                {/* Instead of pages, ahve a predefined route to different pages */}
-                {pages.map((page) => (
-                  <MenuItem key={page} onClick={handleCloseNavMenu}>
-                    <Typography sx={{ textAlign: "center" }}>{page}</Typography>
-                  </MenuItem>
-                ))}
+                {pages.map((page) => {
+                  return (
+                    <MenuItem key={page} onClick={() => handleRedirect(page)}>
+                      <Typography sx={{ textAlign: "center" }}>
+                        {page}
+                      </Typography>
+                    </MenuItem>
+                  );
+                })}
               </Menu>
             </Box>
 
-            {isUserLoggedIn && (
+            {true && (
               <>
                 <Box sx={{ flexGrow: 1, display: { xs: "none", md: "flex" } }}>
                   {pages.map((page) => (
                     <Button
                       key={page}
-                      onClick={handleCloseNavMenu}
+                      onClick={() => handleRedirect(page)}
                       sx={{ my: 2, color: "white", display: "block" }}
                     >
                       {page}

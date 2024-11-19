@@ -18,8 +18,9 @@ const VisuallyHiddenInput = styled("input")({
   width: 1,
 });
 
-function ModalWindow({ modalState, handleModalPopup }) {
-  const { token = "" } = useSelector((state) => state.personDetail.token);
+function ModalWindow({ setTriggerFetch, modalState, handleModalPopup }) {
+  const { token = "" } = useSelector((state) => state.personDetail);
+
   const [inputValues, setInputValues] = useState({
     itemName: "",
     vendorId: null,
@@ -34,7 +35,8 @@ function ModalWindow({ modalState, handleModalPopup }) {
     const name = e.target.name;
     let value = e.target.value;
 
-    if (name === "vendorId") value = value ? Number(e.target.value) : null;
+    if (name === "vendorId")
+      value = Number(e.target.value) ? Number(e.target.value) : null;
     setInputValues((prevState) => ({
       ...prevState,
       [name]: value,
@@ -61,27 +63,44 @@ function ModalWindow({ modalState, handleModalPopup }) {
     });
   };
 
-  const handleUpdateButton = () => {
+  const convertImgToBase64 = (file) => {
+    return new Promise((resolve, reject) => {
+      const fileReader = new FileReader();
+      fileReader.readAsDataURL(file);
+
+      fileReader.onload = () => {
+        resolve(fileReader.result);
+      };
+
+      fileReader.onerror = (error) => {
+        reject(error);
+      };
+    });
+  };
+
+  const handleCreateButton = () => {
     const payload = {
-      itemName: inputValues.itemName,
-      vendorId: inputValues.vendorId,
-      itemDescription: inputValues.itemDescription,
-      itemQuantity: inputValues.itemQuantity,
-      quantityThreshold: inputValues.quantityThreshold,
-      alarmThreshold: inputValues.alarmThreshold,
+      name: inputValues.itemName,
+      vendorId: Number(inputValues.vendorId),
+      detail: inputValues.itemDescription,
+      quantity: inputValues.itemQuantity,
+      quantityReorderThreshold: inputValues.quantityThreshold,
+      quantityAlarmThreshold: inputValues.alarmThreshold,
       picture: inputValues.picture,
     };
 
     fetch("http://localhost:8080/inventory/selected/api/items", {
-      method: "PUT",
+      method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`,
+        // "Authorization": `Bearer ${token}`,
       },
       body: JSON.stringify(payload),
     })
       .then(() => {
+        console.log("Post Success");
         handleModalPopup();
+        setTriggerFetch(true);
       })
       .catch((err) => console.log(err));
   };
@@ -91,11 +110,11 @@ function ModalWindow({ modalState, handleModalPopup }) {
       title="Add new item"
       open={modalState}
       onOk={() => {
-        handleUpdateButton();
+        handleCreateButton();
         handleModalPopup();
       }}
       onCancel={handleCancelModal}
-      okText="Update"
+      okText="Add"
       cancelText="Cancel"
     >
       <Grid2 container spacing={2}>
@@ -186,6 +205,7 @@ function ModalWindow({ modalState, handleModalPopup }) {
             />
           </Flex>
         </Grid2>
+        <Grid2></Grid2>
         <Grid2 size={12}>
           <Button
             component="label"
@@ -194,15 +214,16 @@ function ModalWindow({ modalState, handleModalPopup }) {
             tabIndex={-1}
             startIcon={<CloudUploadIcon />}
           >
-            Upload files
+            Upload Photo
             <VisuallyHiddenInput
               type="file"
-              onChange={(event) =>
+              onChange={async (event) => {
+                const file = await convertImgToBase64(event.target.files[0]);
                 setInputValues((prevState) => ({
                   ...prevState,
-                  picture: event.target.files,
-                }))
-              }
+                  picture: file,
+                }));
+              }}
               multiple
             />
           </Button>
