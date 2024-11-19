@@ -64,11 +64,10 @@ public class ItemController {
         final String itemPictureRootUrl = PictureUploadUtil.uploadPicture(pictureBase64,
                 PictureUploadUtil.createItemPictureName(itemRequest.name(), itemRequest.vendorId()));
 
-        dao.updateItem(mapItemRequestToItem(itemRequest, itemPictureRootUrl, vendorId));
-        dao.updateStockRecord(StockRecord.builder()
+        dao.updateItem(mapItemRequestToItem(itemRequest, itemPictureRootUrl, vendorId, itemId));
+        dao.createStockRecord(StockRecord.builder()
                 .itemId(itemId).quantity(itemRequest.quantity())
                 .effectiveDate(Date.from(Instant.now())).build());
-
         return ResponseEntity.ok(mapItemToItemResponseWithQuantity(dao.getItem(itemId),
                 itemRequest.quantity()));
     }
@@ -76,6 +75,35 @@ public class ItemController {
     @DeleteMapping("/{itemId}")
     public void deleteItem(@PathVariable Integer itemId) {
         dao.deleteItem(itemId);
+    }
+
+    @PutMapping("/fulfillReorder")
+    public ReorderTrackerResponse fulfillItemReorder(@RequestBody final ReorderTrackerRequest reorderTrackerRequest) {
+        if (reorderTrackerRequest.status().equals(ReorderStatus.REORDERED.name())) {
+            throw new RuntimeException("Can't fulfill order that is not in reorder status");
+        }
+
+        final Item item = dao.getItem(reorderTrackerRequest.itemId());
+        final Integer reorderQuantity = Optional.ofNullable(item
+                .getReorderQuantity()).orElse(0);
+
+        final ReorderTracker reorderTracker = dao.getReorderTracker(reorderTrackerRequest.itemId(),
+                reorderTrackerRequest.date(), BigInteger.ONE.intValue());
+
+        final Optional<StockRecord> currentStockRecord = dao.findStockRecordByItemId(reorderTrackerRequest.itemId())
+                .stream().max(Comparator.comparing(StockRecord::getEffectiveDate));
+        final Integer recentStockRecordQuantity = currentStockRecord.map(StockRecord::getQuantity).orElse(null);
+
+        final Integer newTotalQuantity = recentStockRecordQuantity != null ?
+                recentStockRecordQuantity + reorderQuantity : reorderQuantity;
+        //update the stock
+        dao.createStockRecord((StockRecord.builder()
+                .itemId(reorderTrackerRequest.itemId()).quantity(newTotalQuantity)
+                .effectiveDate(Date.from(Instant.now())).build()));
+        //update the reorder tracker with fulfilled status
+        Date dateNow = Date.from(Instant.now());
+        dao.createReorderTracker(new ReorderTracker(reorderTracker.getItemId(), BigInteger.TWO.intValue(), dateNow, reorderTracker.getVendorId(), ""));
+        return new ReorderTrackerResponse(reorderTracker.getItemId(), item.getName(), reorderTracker.getVendorId(), ReorderStatus.FULFILLED.name(), "", dateNow);
     }
 
     @PutMapping("/reorder")
@@ -102,13 +130,13 @@ public class ItemController {
                     NotificationUtil.sendSMS(vendor.getPhone(),
                             NotificationUtil.createItemReorderSMSBody(item.getName(), item.getReorderQuantity()));
                 }
-                //TODO: update the status to pass the string instead of integer
-                dao.createReorderTracker(new ReorderTracker(item.getId(), BigInteger.ONE.intValue(), Date.from(Instant.now()), vendor.getId(), ""));
-                successfullyReorderedItems.add(new ReorderTrackerResponse(item.getId(), item.getVendorId(), ReorderStatus.REORDERED, ""));
+                Date dateNow = Date.from(Instant.now());
+                dao.createReorderTracker(new ReorderTracker(item.getId(), BigInteger.ONE.intValue(), dateNow, vendor.getId(), ""));
+                successfullyReorderedItems.add(new ReorderTrackerResponse(item.getId(), item.getName(), item.getVendorId(), ReorderStatus.REORDERED.name(), "", dateNow));
             } catch (Exception e) {
-                //TODO: update the status to pass the string instead of integer
-                dao.createReorderTracker(new ReorderTracker(item.getId(), BigInteger.ZERO.intValue(), Date.from(Instant.now()), vendor.getId(), e.getMessage()));
-                itemsFailedToReorder.add(new ReorderTrackerResponse(item.getId(), item.getVendorId(), ReorderStatus.FAILED, e.getMessage()));
+                Date dateNow = Date.from(Instant.now());
+                dao.createReorderTracker(new ReorderTracker(item.getId(), BigInteger.ZERO.intValue(), dateNow, vendor.getId(), e.getMessage()));
+                itemsFailedToReorder.add(new ReorderTrackerResponse(item.getId(), item.getName(), item.getVendorId(), ReorderStatus.FAILED.name(), e.getMessage(), dateNow));
             }
         });
 
@@ -116,7 +144,7 @@ public class ItemController {
     }
 
     private ItemResponse mapItemToItemResponse(Item item) {
-        final Optional<StockRecord> recentStockRecord = dao.findByItemId(item.getId())
+        final Optional<StockRecord> recentStockRecord = dao.findStockRecordByItemId(item.getId())
                 .stream().max(Comparator.comparing(StockRecord::getEffectiveDate));
         final Integer quantity = recentStockRecord.map(StockRecord::getQuantity).orElse(null);
         return mapItemToItemResponseWithQuantity(item, quantity);
@@ -135,8 +163,12 @@ public class ItemController {
         );
     }
 
+    private Item mapItemRequestToItem(final ItemRequest itemRequest, final java.lang.String itemPicturesRootUrl, final Integer vendorId) {
+        return mapItemRequestToItem(itemRequest, itemPicturesRootUrl, vendorId, null);
+    }
+
     private Item mapItemRequestToItem(ItemRequest itemRequest,
-                                      final String itemPicturesRootUrl, final Integer vendorId) {
+                                      final java.lang.String itemPicturesRootUrl, final Integer vendorId, final Integer itemId) {
         Item.ItemBuilder itemBuilder = Item.builder()
                 .name(itemRequest.name())
                 .detail(itemRequest.detail())
@@ -147,11 +179,16 @@ public class ItemController {
             itemBuilder.pics(itemPicturesRootUrl);
         }
 
+        if (itemId != null) {
+            itemBuilder.id(itemId);
+        }
+
         return itemBuilder.build();
     }
 
     private ReorderTrackerResponse mapReorderTrackerToReorderTrackerResponse(final ReorderTracker reorderTracker) {
-        final ReorderStatus reorderStatus = reorderTracker.getStatus() == 1 ? ReorderStatus.REORDERED : ReorderStatus.FAILED;
-        return new ReorderTrackerResponse(reorderTracker.getItemId(), reorderTracker.getVendorId(), reorderStatus, reorderTracker.getErrorMessage());
+        final String reorderStatus = reorderTracker.getStatus() == 1 ? ReorderStatus.REORDERED.name() : ReorderStatus.FAILED.name();
+        return new ReorderTrackerResponse(reorderTracker.getItemId(), dao.getItem(reorderTracker.getItemId()).getName(), reorderTracker.getVendorId(),
+                reorderStatus, reorderTracker.getErrorMessage(), reorderTracker.getDate());
     }
 }

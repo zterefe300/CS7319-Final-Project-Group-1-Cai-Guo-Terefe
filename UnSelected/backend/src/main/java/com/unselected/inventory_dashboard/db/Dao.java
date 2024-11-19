@@ -6,6 +6,7 @@ import org.springframework.stereotype.Repository;
 
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -280,7 +281,7 @@ public class Dao {
         return stockRecords;
     }
 
-    public List<StockRecord> findByItemId(int itemId) {
+    public List<StockRecord> findStockRecordByItemId(int itemId) {
         String sql = "SELECT * FROM stock_record where item_id=?";
         List<StockRecord> stockRecords = new ArrayList<>();
 
@@ -619,6 +620,33 @@ public class Dao {
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setInt(1, itemId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    reorderTracker = new ReorderTracker();
+                    reorderTracker.setItemId(rs.getInt("item_id"));
+                    reorderTracker.setStatus(rs.getInt("status"));
+                    reorderTracker.setDate(rs.getTimestamp("date"));
+                    reorderTracker.setVendorId(rs.getInt("vendor_id"));
+                    reorderTracker.setErrorMessage(rs.getString("error_message"));
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+        return reorderTracker;
+    }
+
+    // Retrieve a reorder tracker entry by item ID, date and status
+    public ReorderTracker getReorderTracker(int itemId, Date date, Integer status) {
+        String sql = "SELECT * FROM reorder_tracker WHERE item_id = ?, date = ?, status = ?";
+        ReorderTracker reorderTracker = null;
+
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, itemId);
+            stmt.setTimestamp(2, new Timestamp(date.getTime()));
+            stmt.setInt(3, status);
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
                     reorderTracker = new ReorderTracker();
