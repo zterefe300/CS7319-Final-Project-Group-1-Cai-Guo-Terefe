@@ -63,6 +63,12 @@ public class ItemServiceImpl implements ItemService {
         return itemMapper.selectLimit(limit).stream().map(this::buildItemResponse).toList();
     }
 
+    @Override
+    public List<ReorderTrackerResponse> getReorderTrackerData() {
+        return reorderTrackerMapper.selectAll().stream()
+                .map(this::mapReorderTrackerToReorderTrackerResponse).toList();
+    }
+
     ///TODO: Breakdown service into methods. Add error handling for insert operations
     @Override
     public ItemResponse insertNewItem(final ItemRequest itemRequest) {
@@ -145,12 +151,6 @@ public class ItemServiceImpl implements ItemService {
     public boolean updateStock(int itemId, int quantity) {
         int update = stockRecordMapper.updateQuantity(itemId, quantity);
         return update>0;
-    }
-
-    @Override
-    public List<ReorderTrackerResponse> getReorderTrackerData() {
-        return reorderTrackerMapper.selectAll().stream()
-                .map(this::mapReorderTrackerToReorderTrackerResponse).toList();
     }
 
     private void validateVendorData(final Integer vendorId) {
