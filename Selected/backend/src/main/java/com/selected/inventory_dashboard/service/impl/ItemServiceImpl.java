@@ -125,12 +125,6 @@ public class ItemServiceImpl implements ItemService {
         return buildItemResponseGivenQuantity(updatedItem, itemRequest.quantity());
     }
 
-//    @Override
-//    public ItemResponse fulfillItemReorder(final Integer itemId) {
-//        final
-//        final boolean itemStockUpdated = handleUpdatingItemQuantity(itemId, )
-//    }
-
     @Override
     public boolean deleteItem(final Integer itemId) {
         itemMapper.deleteByPrimaryKey(itemId);
