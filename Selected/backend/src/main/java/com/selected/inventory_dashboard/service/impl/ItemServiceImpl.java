@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import java.math.BigInteger;
 import java.time.Instant;
 import java.util.*;
 
@@ -146,10 +147,11 @@ public class ItemServiceImpl implements ItemService {
         return update>0;
     }
 
-//    @Override
-//    public List<ReorderTrackerResponse> getReorderTrackerData() {
-//        return reorderTrackerMapper.selectAll();
-//    }
+    @Override
+    public List<ReorderTrackerResponse> getReorderTrackerData() {
+        return reorderTrackerMapper.selectAll().stream()
+                .map(this::mapReorderTrackerToReorderTrackerResponse).toList();
+    }
 
     private void validateVendorData(final Integer vendorId) {
         if (vendorId == null) {
@@ -230,14 +232,19 @@ public class ItemServiceImpl implements ItemService {
                         NotificationServiceHelper.createItemReorderSMSBody(item.getName(), item.getReorderQuantity()));
             }
             //TODO: update the status to pass the string instead of integer
-            reorderTrackerMapper.insert(new ReorderTracker(item.getId(), Integer.parseInt(ReorderStatus.REORDERED.name()) , Date.from(Instant.now()), vendor.getId(), ""));
+            reorderTrackerMapper.insert(new ReorderTracker(item.getId(), BigInteger.ONE.intValue(), Date.from(Instant.now()), vendor.getId(), ""));
             return new ReorderTrackerResponse(item.getId(), item.getVendorId(), ReorderStatus.REORDERED, "");
         } catch (Exception e) {
             //TODO: update the status to pass the string instead of integer
-            reorderTrackerMapper.insert(new ReorderTracker(item.getId(), Integer.parseInt(ReorderStatus.FAILED.name()) , Date.from(Instant.now()), vendor.getId(), e.getMessage()));
+            reorderTrackerMapper.insert(new ReorderTracker(item.getId(), BigInteger.ZERO.intValue() , Date.from(Instant.now()), vendor.getId(), e.getMessage()));
             return new
                     ReorderTrackerResponse(item.getId(), item.getVendorId(), ReorderStatus.FAILED, e.getMessage());
         }
+    }
+
+    private ReorderTrackerResponse mapReorderTrackerToReorderTrackerResponse(final ReorderTracker reorderTracker) {
+        final ReorderStatus reorderStatus = reorderTracker.getStatus() == 1 ? ReorderStatus.REORDERED : ReorderStatus.FAILED;
+        return new ReorderTrackerResponse(reorderTracker.getItemId(), reorderTracker.getVendorId(), reorderStatus, reorderTracker.getErrorMessage());
     }
 
     private String createItemPictureName(final String itemName,final Integer vendorId) {

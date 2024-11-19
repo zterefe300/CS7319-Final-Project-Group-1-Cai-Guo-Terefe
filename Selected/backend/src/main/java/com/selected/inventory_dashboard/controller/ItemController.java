@@ -35,9 +35,9 @@ public class ItemController {
         return ResponseEntity.ok(itemService.getAllItemsWithLimit(limit));
     }
 
-    @GetMapping("/reorderTracker")
+    @GetMapping("/reorderTrackerData")
     public ResponseEntity<List<ReorderTrackerResponse>> getReorderTrackerData() {
-        return ResponseEntity.ok(List.of());
+        return ResponseEntity.ok(itemService.getReorderTrackerData());
     }
 
     @PostMapping
