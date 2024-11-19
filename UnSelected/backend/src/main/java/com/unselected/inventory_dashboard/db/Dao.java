@@ -127,7 +127,7 @@ public class Dao {
         return items;
     }
 
-    public List<Item> selectLimit(int limit) {
+    public List<Item> selectItemWithLimit(int limit) {
         String sql = "SELECT * FROM item limit ?";
         List<Item> items = new ArrayList<>();
 
@@ -304,6 +304,22 @@ public class Dao {
             throw new RuntimeException(e);
         }
         return stockRecords;
+    }
+
+    public boolean updateStock(int itemId, int quantity){
+        String sql = "UPDATE stock_record SET quantity = quantity-? WHERE item_id = ? and  quantity >= ?";
+        int update=0;
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, quantity);
+            stmt.setInt(2, itemId);
+            stmt.setInt(3, quantity);
+            update=stmt.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+        return update>0;
     }
 
 
@@ -530,6 +546,32 @@ public class Dao {
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql);
              ResultSet rs = stmt.executeQuery()) {
+
+            while (rs.next()) {
+                Vendor vendor = new Vendor();
+                vendor.setId(rs.getInt("id"));
+                vendor.setName(rs.getString("name"));
+                vendor.setEmail(rs.getString("email"));
+                vendor.setPhone(rs.getString("phone"));
+                vendor.setCreateTime(rs.getTimestamp("create_time"));
+                vendor.setUpdateTime(rs.getTimestamp("update_time"));
+
+                vendors.add(vendor);
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+        return vendors;
+    }
+
+    public List<Vendor> selectVendorWithLimit(int limit) {
+        String sql = "SELECT * FROM vendor limit ?";
+        List<Vendor> vendors = new ArrayList<>();
+
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, limit);
+            ResultSet rs = stmt.executeQuery();
 
             while (rs.next()) {
                 Vendor vendor = new Vendor();

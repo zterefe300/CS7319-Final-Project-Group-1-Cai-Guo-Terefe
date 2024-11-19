@@ -45,7 +45,7 @@ public class VendorController {
     @DeleteMapping("/{vendorId}")
     public ResponseEntity<Boolean> deleteVendor(@PathVariable Integer vendorId) {
         dao.deleteVendor(vendorId);
-        return ResponseEntity.ok(dao.selectLimit(vendorId) == null);
+        return ResponseEntity.ok(dao.selectVendorWithLimit(vendorId) == null);
     }
 
     private VendorResponse mapVendorToVendorResponse(final Vendor vendor) {

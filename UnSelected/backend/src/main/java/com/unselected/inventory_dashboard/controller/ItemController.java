@@ -14,8 +14,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
+import java.math.BigInteger;
 import java.time.Instant;
 import java.util.*;
 
@@ -34,14 +34,21 @@ public class ItemController {
 
     @GetMapping("/{limit}")
     public ResponseEntity<List<ItemResponse>> getItemsWithLimit(@PathVariable Integer limit) {
-        return ResponseEntity.ok(dao.selectLimit(limit).stream().map(this::mapItemToItemResponse).toList());
+        return ResponseEntity.ok(dao.selectItemWithLimit(limit).stream().map(this::mapItemToItemResponse).toList());
+    }
+
+    @GetMapping("/getReorderTrackerData")
+    public ResponseEntity<List<ReorderTrackerResponse>> getReorderTrackerData() {
+        return ResponseEntity.ok(dao.getAllReorderTrackers()
+                .stream().map(this::mapReorderTrackerToReorderTrackerResponse).toList());
     }
 
     @PostMapping
     public ResponseEntity<ItemResponse> createItem(@RequestBody ItemRequest itemRequest) {
         final Integer vendorId = itemRequest.vendorId();
-        final MultipartFile pictureStream = itemRequest.pictureStream();
-        final String itemPictureRootUrl = PictureUploadUtil.uploadPicture(pictureStream, "");
+        final String pictureBase64 = itemRequest.pictureBase64();
+        final String itemPictureRootUrl = PictureUploadUtil.uploadPicture(pictureBase64,
+                PictureUploadUtil.createItemPictureName(itemRequest.name(), itemRequest.vendorId()));
 
         final Integer quantity = 1;
         final Integer itemId = dao.createItem(mapItemRequestToItem(itemRequest, itemPictureRootUrl, vendorId));
@@ -53,8 +60,9 @@ public class ItemController {
     @PutMapping("/{itemId}")
     public ResponseEntity<ItemResponse> updateItem(@PathVariable Integer itemId, @RequestBody ItemRequest itemRequest) {
         final Integer vendorId = itemRequest.vendorId();
-        final MultipartFile pictureStream = itemRequest.pictureStream();
-        final String itemPictureRootUrl = PictureUploadUtil.uploadPicture(pictureStream, "");
+        final String pictureBase64 = itemRequest.pictureBase64();
+        final String itemPictureRootUrl = PictureUploadUtil.uploadPicture(pictureBase64,
+                PictureUploadUtil.createItemPictureName(itemRequest.name(), itemRequest.vendorId()));
 
         dao.updateItem(mapItemRequestToItem(itemRequest, itemPictureRootUrl, vendorId));
         dao.updateStockRecord(StockRecord.builder()
@@ -95,11 +103,11 @@ public class ItemController {
                             NotificationUtil.createItemReorderSMSBody(item.getName(), item.getReorderQuantity()));
                 }
                 //TODO: update the status to pass the string instead of integer
-                dao.createReorderTracker(new ReorderTracker(item.getId(), Integer.parseInt(ReorderStatus.REORDERED.name()) , Date.from(Instant.now()), vendor.getId(), ""));
+                dao.createReorderTracker(new ReorderTracker(item.getId(), BigInteger.ONE.intValue(), Date.from(Instant.now()), vendor.getId(), ""));
                 successfullyReorderedItems.add(new ReorderTrackerResponse(item.getId(), item.getVendorId(), ReorderStatus.REORDERED, ""));
             } catch (Exception e) {
                 //TODO: update the status to pass the string instead of integer
-                dao.createReorderTracker(new ReorderTracker(item.getId(), Integer.parseInt(ReorderStatus.FAILED.name()) , Date.from(Instant.now()), vendor.getId(), e.getMessage()));
+                dao.createReorderTracker(new ReorderTracker(item.getId(), BigInteger.ZERO.intValue(), Date.from(Instant.now()), vendor.getId(), e.getMessage()));
                 itemsFailedToReorder.add(new ReorderTrackerResponse(item.getId(), item.getVendorId(), ReorderStatus.FAILED, e.getMessage()));
             }
         });
@@ -140,5 +148,10 @@ public class ItemController {
         }
 
         return itemBuilder.build();
+    }
+
+    private ReorderTrackerResponse mapReorderTrackerToReorderTrackerResponse(final ReorderTracker reorderTracker) {
+        final ReorderStatus reorderStatus = reorderTracker.getStatus() == 1 ? ReorderStatus.REORDERED : ReorderStatus.FAILED;
+        return new ReorderTrackerResponse(reorderTracker.getItemId(), reorderTracker.getVendorId(), reorderStatus, reorderTracker.getErrorMessage());
     }
 }

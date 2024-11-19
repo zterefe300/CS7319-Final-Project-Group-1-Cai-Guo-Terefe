@@ -43,4 +43,11 @@
     select id, item_id, quantity, operator, effective_date
     from stock_record where item_id=#{itemId}
   </select>
+
+  <update id="updateQuantity" parameterType="int">
+    update stock_record
+    set
+        quantity = quantity-#{quantity}
+    where item_id = #{itemId} and  quantity >= #{quantity}
+  </update>
 </mapper>

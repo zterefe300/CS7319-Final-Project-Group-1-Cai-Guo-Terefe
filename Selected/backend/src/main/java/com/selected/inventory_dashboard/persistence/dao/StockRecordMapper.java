@@ -18,4 +18,6 @@ public interface StockRecordMapper {
      * get stockRecords by itemId
      */
     List<StockRecord> findByItemId(int itemId);
+
+    int updateQuantity(int itemId, int quantity);
 }

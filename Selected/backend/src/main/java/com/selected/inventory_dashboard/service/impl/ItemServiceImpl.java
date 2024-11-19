@@ -24,8 +24,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
+import java.math.BigInteger;
 import java.time.Instant;
 import java.util.*;
 
@@ -63,6 +63,12 @@ public class ItemServiceImpl implements ItemService {
         return itemMapper.selectLimit(limit).stream().map(this::buildItemResponse).toList();
     }
 
+    @Override
+    public List<ReorderTrackerResponse> getReorderTrackerData() {
+        return reorderTrackerMapper.selectAll().stream()
+                .map(this::mapReorderTrackerToReorderTrackerResponse).toList();
+    }
+
     ///TODO: Breakdown service into methods. Add error handling for insert operations
     @Override
     public ItemResponse insertNewItem(final ItemRequest itemRequest) {
@@ -72,9 +78,9 @@ public class ItemServiceImpl implements ItemService {
         final Integer vendorId = itemRequest.vendorId();
         validateVendorData(vendorId);
 
-        final MultipartFile pictureStream = itemRequest.pictureStream();
-        //TODO: Pass custom name with the item id.
-        final String itemPicturesRootUrl =  Optional.ofNullable(insertOrUpdatePictureAndGetUrl(pictureStream))
+        final String pictureBase64 = itemRequest.pictureBase64();
+        final String itemPicturesRootUrl =  Optional.ofNullable(insertPictureAndGetUrl(pictureBase64,
+                        createItemPictureName(itemRequest.name(), itemRequest.vendorId())))
                 .orElse("");
 
         Integer itemId = itemMapper.insert(buildItemFromItemRequest(itemRequest, itemPicturesRootUrl, vendorId));
@@ -100,7 +106,8 @@ public class ItemServiceImpl implements ItemService {
         final Integer vendorId = itemRequest.vendorId();
         validateVendorData(vendorId);
 
-        final String updatedPictureFileUrl = insertOrUpdatePictureAndGetUrl(itemRequest.pictureStream());
+        final String updatedPictureFileUrl = insertPictureAndGetUrl(itemRequest.pictureBase64(),
+                createItemPictureName(itemRequest.name(), itemRequest.vendorId()));
         final Item itemWithUpdates = buildItemFromItemRequest(itemRequest, updatedPictureFileUrl, vendorId);
 
         //Update item
@@ -138,6 +145,12 @@ public class ItemServiceImpl implements ItemService {
         });
 
         return new ReorderTrackerResponseWrapper(successfullyReorderedItems, itemsFailedToReorder);
+    }
+
+    @Override
+    public boolean updateStock(int itemId, int quantity) {
+        int update = stockRecordMapper.updateQuantity(itemId, quantity);
+        return update>0;
     }
 
     private void validateVendorData(final Integer vendorId) {
@@ -197,9 +210,10 @@ public class ItemServiceImpl implements ItemService {
         return itemBuilder.build();
     }
 
-    private String insertOrUpdatePictureAndGetUrl(final MultipartFile pictureFile) {
-        if (pictureFile != null) {
-            return fileUploaderServiceCoordinator.uploadPicture(pictureFile, "");
+    private String insertPictureAndGetUrl(final String itemPictureBase64, final String itemPictureName) {
+        if (itemPictureBase64 != null) {
+
+            return fileUploaderServiceCoordinator.uploadPicture(itemPictureBase64, itemPictureName);
         }
         return null;
     }
@@ -218,13 +232,22 @@ public class ItemServiceImpl implements ItemService {
                         NotificationServiceHelper.createItemReorderSMSBody(item.getName(), item.getReorderQuantity()));
             }
             //TODO: update the status to pass the string instead of integer
-            reorderTrackerMapper.insert(new ReorderTracker(item.getId(), Integer.parseInt(ReorderStatus.REORDERED.name()) , Date.from(Instant.now()), vendor.getId(), ""));
+            reorderTrackerMapper.insert(new ReorderTracker(item.getId(), BigInteger.ONE.intValue(), Date.from(Instant.now()), vendor.getId(), ""));
             return new ReorderTrackerResponse(item.getId(), item.getVendorId(), ReorderStatus.REORDERED, "");
         } catch (Exception e) {
             //TODO: update the status to pass the string instead of integer
-            reorderTrackerMapper.insert(new ReorderTracker(item.getId(), Integer.parseInt(ReorderStatus.FAILED.name()) , Date.from(Instant.now()), vendor.getId(), e.getMessage()));
+            reorderTrackerMapper.insert(new ReorderTracker(item.getId(), BigInteger.ZERO.intValue() , Date.from(Instant.now()), vendor.getId(), e.getMessage()));
             return new
                     ReorderTrackerResponse(item.getId(), item.getVendorId(), ReorderStatus.FAILED, e.getMessage());
         }
+    }
+
+    private ReorderTrackerResponse mapReorderTrackerToReorderTrackerResponse(final ReorderTracker reorderTracker) {
+        final ReorderStatus reorderStatus = reorderTracker.getStatus() == 1 ? ReorderStatus.REORDERED : ReorderStatus.FAILED;
+        return new ReorderTrackerResponse(reorderTracker.getItemId(), reorderTracker.getVendorId(), reorderStatus, reorderTracker.getErrorMessage());
+    }
+
+    private String createItemPictureName(final String itemName,final Integer vendorId) {
+        return  String.format("%s-%s-%s.%s", itemName, vendorId, System.currentTimeMillis(), "jpg");
     }
 }

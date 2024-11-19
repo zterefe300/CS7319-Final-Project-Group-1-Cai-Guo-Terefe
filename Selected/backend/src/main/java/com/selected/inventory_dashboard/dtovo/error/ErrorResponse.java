@@ -1,4 +1,4 @@
 package com.selected.inventory_dashboard.dtovo.error;
 
-public record ErrorResponse(String message) {
+public record ErrorResponse(String errorMessage) {
 }

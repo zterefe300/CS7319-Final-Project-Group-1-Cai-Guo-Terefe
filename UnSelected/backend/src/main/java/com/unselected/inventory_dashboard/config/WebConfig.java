@@ -1,4 +1,4 @@
-package com.selected.inventory_dashboard.config;
+package com.unselected.inventory_dashboard.config;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
@@ -16,7 +16,8 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        registry.addResourceHandler("/images/**").addResourceLocations("file:uploads/", String.format("file:%s", uploadDirectory));
+        registry.addResourceHandler("/images/**").
+                addResourceLocations("file:uploads/", String.format("file:%s", uploadDirectory));
     }
 
     @Override
