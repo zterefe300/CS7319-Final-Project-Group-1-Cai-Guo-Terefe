@@ -83,7 +83,8 @@ public class ItemController {
             throw new RuntimeException("Can't fulfill order that is not in reorder status");
         }
 
-        final Integer reorderQuantity = Optional.ofNullable(dao.getItem(reorderTrackerRequest.itemId())
+        final Item item = dao.getItem(reorderTrackerRequest.itemId());
+        final Integer reorderQuantity = Optional.ofNullable(item
                 .getReorderQuantity()).orElse(0);
 
         final ReorderTracker reorderTracker = dao.getReorderTracker(reorderTrackerRequest.itemId(),
@@ -102,7 +103,7 @@ public class ItemController {
         //update the reorder tracker with fulfilled status
         Date dateNow = Date.from(Instant.now());
         dao.createReorderTracker(new ReorderTracker(reorderTracker.getItemId(), BigInteger.TWO.intValue(), dateNow, reorderTracker.getVendorId(), ""));
-        return new ReorderTrackerResponse(reorderTracker.getItemId(), reorderTracker.getVendorId(), ReorderStatus.FULFILLED.name(), "", dateNow);
+        return new ReorderTrackerResponse(reorderTracker.getItemId(), item.getName(), reorderTracker.getVendorId(), ReorderStatus.FULFILLED.name(), "", dateNow);
     }
 
     @PutMapping("/reorder")
@@ -131,11 +132,11 @@ public class ItemController {
                 }
                 Date dateNow = Date.from(Instant.now());
                 dao.createReorderTracker(new ReorderTracker(item.getId(), BigInteger.ONE.intValue(), dateNow, vendor.getId(), ""));
-                successfullyReorderedItems.add(new ReorderTrackerResponse(item.getId(), item.getVendorId(), ReorderStatus.REORDERED.name(), "", dateNow));
+                successfullyReorderedItems.add(new ReorderTrackerResponse(item.getId(), item.getName(), item.getVendorId(), ReorderStatus.REORDERED.name(), "", dateNow));
             } catch (Exception e) {
                 Date dateNow = Date.from(Instant.now());
                 dao.createReorderTracker(new ReorderTracker(item.getId(), BigInteger.ZERO.intValue(), dateNow, vendor.getId(), e.getMessage()));
-                itemsFailedToReorder.add(new ReorderTrackerResponse(item.getId(), item.getVendorId(), ReorderStatus.FAILED.name(), e.getMessage(), dateNow));
+                itemsFailedToReorder.add(new ReorderTrackerResponse(item.getId(), item.getName(), item.getVendorId(), ReorderStatus.FAILED.name(), e.getMessage(), dateNow));
             }
         });
 
@@ -187,6 +188,7 @@ public class ItemController {
 
     private ReorderTrackerResponse mapReorderTrackerToReorderTrackerResponse(final ReorderTracker reorderTracker) {
         final String reorderStatus = reorderTracker.getStatus() == 1 ? ReorderStatus.REORDERED.name() : ReorderStatus.FAILED.name();
-        return new ReorderTrackerResponse(reorderTracker.getItemId(), reorderTracker.getVendorId(), reorderStatus, reorderTracker.getErrorMessage(), reorderTracker.getDate());
+        return new ReorderTrackerResponse(reorderTracker.getItemId(), dao.getItem(reorderTracker.getItemId()).getName(), reorderTracker.getVendorId(),
+                reorderStatus, reorderTracker.getErrorMessage(), reorderTracker.getDate());
     }
 }

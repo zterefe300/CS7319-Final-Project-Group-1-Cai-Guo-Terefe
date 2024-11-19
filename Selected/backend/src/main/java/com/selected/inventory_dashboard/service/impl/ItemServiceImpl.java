@@ -160,7 +160,8 @@ public class ItemServiceImpl implements ItemService {
     public ReorderTrackerResponse fulfillItemReorder(final ReorderTrackerRequest reorderTrackerRequest) {
         final Integer statusAsInt = reorderTrackerRequest.status().equals(ReorderStatus.REORDERED.name()) ? 1 : 0;
 
-        final Integer reorderQuantity = Optional.ofNullable(itemMapper.selectByPrimaryKey(reorderTrackerRequest.itemId())
+        final Item item = itemMapper.selectByPrimaryKey(reorderTrackerRequest.itemId());
+        final Integer reorderQuantity = Optional.ofNullable(item
                 .getReorderQuantity()).orElse(0);
 
         final ReorderTracker reorderTracker = reorderTrackerMapper
@@ -178,7 +179,7 @@ public class ItemServiceImpl implements ItemService {
         //update the reorder tracker with fulfilled status
         Date dateNow = Date.from(Instant.now());
         reorderTrackerMapper.insert(new ReorderTracker(reorderTracker.getItemId(), BigInteger.TWO.intValue(), dateNow, reorderTracker.getVendorId(), ""));
-        return new ReorderTrackerResponse(reorderTracker.getItemId(), reorderTracker.getVendorId(), ReorderStatus.FULFILLED.name(), "", dateNow);
+        return createReorderTrackerResponse(reorderTracker, item.getName(), dateNow, ReorderStatus.FULFILLED.name());
     }
 
     private void validateVendorData(final Integer vendorId) {
@@ -264,18 +265,19 @@ public class ItemServiceImpl implements ItemService {
 
             Date dateNow = Date.from(Instant.now());
             reorderTrackerMapper.insert(new ReorderTracker(item.getId(), BigInteger.ONE.intValue(), dateNow, vendor.getId(), ""));
-            return new ReorderTrackerResponse(item.getId(), item.getVendorId(), ReorderStatus.REORDERED.name(), "", dateNow);
+            return new ReorderTrackerResponse(item.getId(), item.getName(), item.getVendorId(), ReorderStatus.REORDERED.name(), "", dateNow);
         } catch (Exception e) {
             Date dateNow = Date.from(Instant.now());
             reorderTrackerMapper.insert(new ReorderTracker(item.getId(), BigInteger.ZERO.intValue() , dateNow, vendor.getId(), e.getMessage()));
             return new
-                    ReorderTrackerResponse(item.getId(), item.getVendorId(), ReorderStatus.FAILED.name(), e.getMessage(), dateNow);
+                    ReorderTrackerResponse(item.getId(), item.getName(), item.getVendorId(), ReorderStatus.FAILED.name(), e.getMessage(), dateNow);
         }
     }
 
     private ReorderTrackerResponse mapReorderTrackerToReorderTrackerResponse(final ReorderTracker reorderTracker) {
         final ReorderStatus reorderStatus = reorderTracker.getStatus() == 1 ? ReorderStatus.REORDERED : ReorderStatus.FAILED;
-        return new ReorderTrackerResponse(reorderTracker.getItemId(), reorderTracker.getVendorId(), reorderStatus.name(), reorderTracker.getErrorMessage(), reorderTracker.getDate());
+        return createReorderTrackerResponse(reorderTracker, itemMapper.selectByPrimaryKey(reorderTracker.getItemId()).getName(),
+                reorderStatus.name());
     }
 
     private String createItemPictureName(final String itemName,final Integer vendorId) {
@@ -290,5 +292,15 @@ public class ItemServiceImpl implements ItemService {
     private Optional<StockRecord> getRecentStockRecordForItem(final Integer itemId) {
         return stockRecordMapper.findByItemId(itemId)
                 .stream().max(Comparator.comparing(StockRecord::getEffectiveDate));
+    }
+
+    private ReorderTrackerResponse createReorderTrackerResponse(final ReorderTracker reorderTracker, final String itemName, final String reorderStatus) {
+        return new ReorderTrackerResponse(reorderTracker.getItemId(), itemName, reorderTracker.getVendorId(), reorderStatus,
+                "", reorderTracker.getDate());
+    }
+    private ReorderTrackerResponse createReorderTrackerResponse(final ReorderTracker reorderTracker, final String itemName,
+                                                                final Date effectiveDate, final String reorderStatus) {
+        return new ReorderTrackerResponse(reorderTracker.getItemId(), itemName, reorderTracker.getVendorId(),
+                reorderStatus, "", effectiveDate);
     }
 }
