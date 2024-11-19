@@ -47,7 +47,6 @@ function Navbar() {
   };
 
   const handleRedirect = (pageName) => {
-    console.log("pageName", pageName);
     setAnchorElNav(null);
     switch (pageName) {
       case "Dashboard":

@@ -48,7 +48,7 @@ function ItemTrackingPage() {
       {
         method: "GET",
         headers: {
-          // "Authorization": `Bearer ${token}`,
+          "Authorization": `Bearer ${token}`,
         },
       }
     )
@@ -63,13 +63,14 @@ function ItemTrackingPage() {
   const handleUpdateButton = (itemId) => {
     const payload = {
       itemId: itemId,
-      status: "Fullfilled",
+      reorderStatus: "Fulfilled",
     };
+    
     fetch("http://localhost:8080/inventory/selected/api/items", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        // "Authorization": `Bearer ${token}`,
+        "Authorization": `Bearer ${token}`,
       },
       body: JSON.stringify(payload),
     })
@@ -90,14 +91,14 @@ function ItemTrackingPage() {
     },
     {
       title: "Status",
-      dataIndex: "status",
-      key: "status",
+      dataIndex: "reorderStatus",
+      key: "reorderStatus",
     },
     {
       title: "Update",
-      render: (itemId) => (
+      render: ({ itemId }) => (
         <Button onClick={() => handleUpdateButton(itemId)} varient="Contained">
-          Update
+          Fulfilled
         </Button>
       ),
     },

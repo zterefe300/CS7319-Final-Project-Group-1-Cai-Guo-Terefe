@@ -85,7 +85,6 @@ function DashboardPage() {
   };
 
   const renderItemDetailCard = data?.map((item) => {
-    console.log("item", item);
     return (
       <Grid2 size={4} key={item.id}>
         <Card variant="outlined" sx={{ backgroundColor: "#fafafa" }}>

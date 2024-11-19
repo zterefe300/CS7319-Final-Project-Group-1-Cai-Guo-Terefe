@@ -40,7 +40,6 @@ function ItemDetailPage() {
   };
 
   const handleDeleteButton = () => {
-    console.log("clicked")
     fetch(`http://localhost:8080/inventory/selected/api/items/${id}`, {
       method: "DELETE",
       headers: {
