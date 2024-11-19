@@ -83,7 +83,9 @@ public class ItemServiceImpl implements ItemService {
                         createItemPictureName(itemRequest.name(), itemRequest.vendorId())))
                 .orElse("");
 
-        Integer itemId = itemMapper.insert(buildItemFromItemRequest(itemRequest, itemPicturesRootUrl, vendorId));
+        final Item itemToInsert = buildItemFromItemRequest(itemRequest, itemPicturesRootUrl, vendorId);
+        itemMapper.insert(itemToInsert);
+        final Integer itemId = itemToInsert.getId();
         final Item item = itemMapper.selectByPrimaryKey(itemId);
 
         final Integer quantity = 1;
@@ -123,6 +125,12 @@ public class ItemServiceImpl implements ItemService {
         return buildItemResponseGivenQuantity(updatedItem, itemRequest.quantity());
     }
 
+//    @Override
+//    public ItemResponse fulfillItemReorder(final Integer itemId) {
+//        final
+//        final boolean itemStockUpdated = handleUpdatingItemQuantity(itemId, )
+//    }
+
     @Override
     public boolean deleteItem(final Integer itemId) {
         itemMapper.deleteByPrimaryKey(itemId);
@@ -149,8 +157,7 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public boolean updateStock(int itemId, int quantity) {
-        int update = stockRecordMapper.updateQuantity(itemId, quantity);
-        return update>0;
+        return handleUpdatingItemQuantity(itemId, quantity);
     }
 
     private void validateVendorData(final Integer vendorId) {
@@ -212,7 +219,6 @@ public class ItemServiceImpl implements ItemService {
 
     private String insertPictureAndGetUrl(final String itemPictureBase64, final String itemPictureName) {
         if (itemPictureBase64 != null) {
-
             return fileUploaderServiceCoordinator.uploadPicture(itemPictureBase64, itemPictureName);
         }
         return null;
@@ -249,5 +255,10 @@ public class ItemServiceImpl implements ItemService {
 
     private String createItemPictureName(final String itemName,final Integer vendorId) {
         return  String.format("%s-%s-%s.%s", itemName, vendorId, System.currentTimeMillis(), "jpg");
+    }
+
+    private boolean handleUpdatingItemQuantity(final Integer itemId, final Integer quantity) {
+        int update = stockRecordMapper.updateQuantity(itemId, quantity);
+        return update>0;
     }
 }
