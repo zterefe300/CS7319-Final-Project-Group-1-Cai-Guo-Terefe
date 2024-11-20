@@ -89,7 +89,7 @@ function ModalWindow({ setTriggerFetch, modalState, handleModalPopup }) {
       pictureBase64: inputValues.picture,
     };
 
-    fetch("http://localhost:8080/inventory/selected/api/items", {
+    fetch("http://localhost:8080/inventory/unSelected/api/items", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

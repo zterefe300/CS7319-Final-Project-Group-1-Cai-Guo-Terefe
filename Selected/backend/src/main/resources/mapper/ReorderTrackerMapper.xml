@@ -23,10 +23,10 @@
   <update id="updateByPrimaryKey" parameterType="com.selected.inventory_dashboard.persistence.entity.ReorderTracker">
     update reorder_tracker
     set vendor_id = #{vendorId,jdbcType=INTEGER},
-      error_message = #{errorMessage,jdbcType=VARCHAR}
+      error_message = #{errorMessage,jdbcType=VARCHAR},
+      status = #{status,jdbcType=INTEGER}
     where item_id = #{itemId,jdbcType=INTEGER}
-      and status = #{status,jdbcType=INTEGER}
-      and date = #{date,jdbcType=TIMESTAMP}
+      and status = 1
   </update>
   <select id="selectByPrimaryKey" parameterType="map" resultMap="BaseResultMap">
     select item_id, status, date, vendor_id, error_message

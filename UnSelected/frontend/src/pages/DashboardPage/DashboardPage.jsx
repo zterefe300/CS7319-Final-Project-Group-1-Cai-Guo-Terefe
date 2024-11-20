@@ -20,7 +20,7 @@ function DashboardPage() {
   useEffect(() => {
     if (triggerFetch) {
       setTriggerFetch(false);
-      fetch("http://localhost:8080/inventory/selected/api/items", {
+      fetch("http://localhost:8080/inventory/ununSelected/api/items", {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
