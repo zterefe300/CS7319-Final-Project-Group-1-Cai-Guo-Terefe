@@ -12,10 +12,7 @@
     delete from stock_record
     where id = #{id,jdbcType=INTEGER}
   </delete>
-  <insert id="insert" parameterType="com.selected.inventory_dashboard.persistence.entity.StockRecord">
-    <selectKey keyProperty="id" order="AFTER" resultType="java.lang.Integer">
-      SELECT LAST_INSERT_ID()
-    </selectKey>
+  <insert id="insert" parameterType="com.selected.inventory_dashboard.persistence.entity.StockRecord" useGeneratedKeys="true" keyColumn="id" keyProperty="id">
     insert into stock_record (item_id, quantity, operator, 
       effective_date)
     values (#{itemId,jdbcType=INTEGER}, #{quantity,jdbcType=INTEGER}, #{operator,jdbcType=VARCHAR}, 
@@ -43,4 +40,11 @@
     select id, item_id, quantity, operator, effective_date
     from stock_record where item_id=#{itemId}
   </select>
+
+  <update id="updateQuantity" parameterType="int">
+    update stock_record
+    set
+        quantity = quantity-#{quantity}
+    where item_id = #{itemId} and  quantity >= #{quantity}
+  </update>
 </mapper>

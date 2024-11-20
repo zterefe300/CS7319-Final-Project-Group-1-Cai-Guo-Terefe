@@ -28,10 +28,7 @@
     delete from item
     where id = #{id,jdbcType=INTEGER}
   </delete>
-  <insert id="insert" parameterType="com.selected.inventory_dashboard.persistence.entity.Item">
-    <selectKey keyProperty="id" order="AFTER" resultType="java.lang.Integer">
-      SELECT LAST_INSERT_ID()
-    </selectKey>
+  <insert id="insert" parameterType="com.selected.inventory_dashboard.persistence.entity.Item" useGeneratedKeys="true" keyColumn="id" keyProperty="id">
     insert into item (name, detail, pics, 
       alarm_threshold, quantity_threshold, vendor_id, 
       effective_date, reorder_quantity)
@@ -70,5 +67,9 @@
   <select id="findAllBelowQtyThreshold" resultMap="BaseResultMap">
     select item.*,stock_record.quantity from item left join stock_record on item.id=stock_record.item_id
     where <![CDATA[stock_record.quantity < item.quantity_threshold ]]>
+  </select>
+  <select id="findAllBelowAlarmThreshold" resultMap="BaseResultMap">
+    select item.*,stock_record.quantity from item left join stock_record on item.id=stock_record.item_id
+    where <![CDATA[stock_record.quantity < item.alarm_threshold ]]>
   </select>
 </mapper>

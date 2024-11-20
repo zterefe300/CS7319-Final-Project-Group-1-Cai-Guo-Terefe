@@ -18,11 +18,12 @@ const VisuallyHiddenInput = styled("input")({
   width: 1,
 });
 
-function ModalWindow({ modalState, handleModalPopup }) {
-  const { token = "" } = useSelector((state) => state.personDetail.token);
+function ModalWindow({ setTriggerFetch, modalState, handleModalPopup }) {
+  const { token = "" } = useSelector((state) => state.personDetail);
+
   const [inputValues, setInputValues] = useState({
     itemName: "",
-    vendorId: null,
+    vendorId: "",
     itemDescription: "",
     itemQuantity: 0,
     quantityThreshold: 0,
@@ -34,7 +35,8 @@ function ModalWindow({ modalState, handleModalPopup }) {
     const name = e.target.name;
     let value = e.target.value;
 
-    if (name === "vendorId") value = value ? Number(e.target.value) : null;
+    if (name === "vendorId")
+      value = Number(e.target.value) ? Number(e.target.value) : null;
     setInputValues((prevState) => ({
       ...prevState,
       [name]: value,
@@ -52,7 +54,7 @@ function ModalWindow({ modalState, handleModalPopup }) {
     handleModalPopup();
     setInputValues({
       itemName: "",
-      vendorId: null,
+      vendorId: "",
       itemDescription: "",
       itemQuantity: 0,
       quantityThreshold: 0,
@@ -61,27 +63,44 @@ function ModalWindow({ modalState, handleModalPopup }) {
     });
   };
 
+  const convertImgToBase64 = (file) => {
+    return new Promise((resolve, reject) => {
+      const fileReader = new FileReader();
+      fileReader.readAsDataURL(file);
+
+      fileReader.onload = () => {
+        resolve(fileReader.result);
+      };
+
+      fileReader.onerror = (error) => {
+        reject(error);
+      };
+    });
+  };
+
   const handleCreateButton = () => {
     const payload = {
-      itemName: inputValues.itemName,
-      vendorId: inputValues.vendorId,
-      itemDescription: inputValues.itemDescription,
-      itemQuantity: inputValues.itemQuantity,
-      quantityThreshold: inputValues.quantityThreshold,
-      alarmThreshold: inputValues.alarmThreshold,
-      picture: inputValues.picture,
+      name: inputValues.itemName,
+      vendorId: Number(inputValues.vendorId),
+      detail: inputValues.itemDescription,
+      quantity: inputValues.itemQuantity,
+      quantityReorderThreshold: inputValues.quantityThreshold,
+      quantityAlarmThreshold: inputValues.alarmThreshold,
+      pictureBase64: inputValues.picture,
     };
 
     fetch("http://localhost:8080/inventory/selected/api/items", {
-      method: "PUT",
+      method: "POST",
       headers: {
         "Content-Type": "application/json",
-        // "Authorization": token,
+        Authorization: `Bearer ${token}`,
       },
-      body: payload,
+      body: JSON.stringify(payload),
     })
       .then(() => {
+        handleCancelModal();
         handleModalPopup();
+        setTriggerFetch(true);
       })
       .catch((err) => console.log(err));
   };
@@ -90,7 +109,10 @@ function ModalWindow({ modalState, handleModalPopup }) {
     <Modal
       title="Add new item"
       open={modalState}
-      onOk={handleModalPopup}
+      onOk={() => {
+        handleCreateButton();
+        handleModalPopup();
+      }}
       onCancel={handleCancelModal}
       okText="Add"
       cancelText="Cancel"
@@ -183,6 +205,7 @@ function ModalWindow({ modalState, handleModalPopup }) {
             />
           </Flex>
         </Grid2>
+        <Grid2></Grid2>
         <Grid2 size={12}>
           <Button
             component="label"
@@ -191,15 +214,16 @@ function ModalWindow({ modalState, handleModalPopup }) {
             tabIndex={-1}
             startIcon={<CloudUploadIcon />}
           >
-            Upload files
+            Upload Photo
             <VisuallyHiddenInput
               type="file"
-              onChange={(event) =>
+              onChange={async (event) => {
+                const file = await convertImgToBase64(event.target.files[0]);
                 setInputValues((prevState) => ({
                   ...prevState,
-                  picture: event.target.files,
-                }))
-              }
+                  picture: file,
+                }));
+              }}
               multiple
             />
           </Button>

@@ -2,6 +2,7 @@ package com.selected.inventory_dashboard.service.impl;
 
 import com.selected.inventory_dashboard.constants.ReorderStatus;
 import com.selected.inventory_dashboard.dtovo.req.ItemRequest;
+import com.selected.inventory_dashboard.dtovo.req.ReorderTrackerRequest;
 import com.selected.inventory_dashboard.dtovo.res.ItemAndQty;
 import com.selected.inventory_dashboard.dtovo.res.ItemResponse;
 import com.selected.inventory_dashboard.dtovo.res.ReorderTrackerResponse;
@@ -24,8 +25,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
+import java.math.BigInteger;
 import java.time.Instant;
 import java.util.*;
 
@@ -63,6 +64,12 @@ public class ItemServiceImpl implements ItemService {
         return itemMapper.selectLimit(limit).stream().map(this::buildItemResponse).toList();
     }
 
+    @Override
+    public List<ReorderTrackerResponse> getReorderTrackerData() {
+        return reorderTrackerMapper.selectAll().stream()
+                .map(this::mapReorderTrackerToReorderTrackerResponse).toList();
+    }
+
     ///TODO: Breakdown service into methods. Add error handling for insert operations
     @Override
     public ItemResponse insertNewItem(final ItemRequest itemRequest) {
@@ -72,14 +79,17 @@ public class ItemServiceImpl implements ItemService {
         final Integer vendorId = itemRequest.vendorId();
         validateVendorData(vendorId);
 
-        final MultipartFile pictureStream = itemRequest.pictureStream();
-        //TODO: Pass custom name with the item id.
-        final String itemPicturesRootUrl = insertOrUpdatePictureAndGetUrl(pictureStream);
+        final String pictureBase64 = itemRequest.pictureBase64();
+        final String itemPicturesRootUrl =  Optional.ofNullable(insertPictureAndGetUrl(pictureBase64,
+                        createItemPictureName(itemRequest.name(), itemRequest.vendorId())))
+                .orElse("");
 
-        Integer itemId = itemMapper.insert(buildItemFromItemRequest(itemRequest, itemPicturesRootUrl, vendorId));
+        final Item itemToInsert = buildItemFromItemRequest(itemRequest, itemPicturesRootUrl, vendorId, null);
+        itemMapper.insert(itemToInsert);
+        final Integer itemId = itemToInsert.getId();
         final Item item = itemMapper.selectByPrimaryKey(itemId);
 
-        final Integer quantity = 1;
+        final Integer quantity = itemRequest.quantity();
         //Create stock record of the item with quantity one since we only add a single item.
         stockRecordMapper.insert(StockRecord.builder().itemId(itemId)
                 .quantity(quantity).effectiveDate(Date.from(Instant.now())).build());
@@ -99,15 +109,17 @@ public class ItemServiceImpl implements ItemService {
         final Integer vendorId = itemRequest.vendorId();
         validateVendorData(vendorId);
 
-        final String updatedPictureFileUrl = insertOrUpdatePictureAndGetUrl(itemRequest.pictureStream());
-        final Item itemWithUpdates = buildItemFromItemRequest(itemRequest, updatedPictureFileUrl, vendorId);
+        final String updatedPictureFileUrl = insertPictureAndGetUrl(itemRequest.pictureBase64(),
+                createItemPictureName(itemRequest.name(), itemRequest.vendorId()));
+        final Item itemWithUpdates = buildItemFromItemRequest(itemRequest, updatedPictureFileUrl, vendorId, itemId);
 
         //Update item
         itemMapper.updateByPrimaryKey(
                 itemWithUpdates
         );
+
         //Update stock record
-        stockRecordMapper.updateByPrimaryKey(StockRecord.builder()
+        stockRecordMapper.insert(StockRecord.builder()
                 .itemId(itemId).quantity(itemRequest.quantity())
                 .effectiveDate(Date.from(Instant.now())).build());
 
@@ -122,21 +134,64 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
-    @Scheduled(cron = "0 0 2 * * ?")
+    @Scheduled(fixedRate = 30000)
     //TODO: Update cron to drive its value from application properties
     public ReorderTrackerResponseWrapper reorderItemsLowStockItems() {
         final List<ReorderTrackerResponse> successfullyReorderedItems = new ArrayList<>();
         final List<ReorderTrackerResponse> itemsFailedToReorder = new ArrayList<>();
-        Map<ReorderStatus, List<ReorderTrackerResponse>> statusListMap = Map.of(ReorderStatus.REORDERED, successfullyReorderedItems,
-                ReorderStatus.FAILED, itemsFailedToReorder);
+        Map<String, List<ReorderTrackerResponse>> statusListMap = Map.of(ReorderStatus.REORDERED.name(), successfullyReorderedItems,
+                ReorderStatus.FAILED.name(), itemsFailedToReorder);
 
         final List<ItemAndQty> lowStockItems = itemMapper.findAllBelowQtyThreshold();
-        lowStockItems.forEach(item -> {
-            final ReorderTrackerResponse reorderTrackerResponse =  handleSingleItemReorder(item);
+        lowStockItems.forEach(itemQty -> {
+            final ReorderTrackerResponse reorderTrackerResponse =  handleSingleItemReorder(mapItemQtyToItem(itemQty));
             statusListMap.get(reorderTrackerResponse.reorderStatus()).add(reorderTrackerResponse);
         });
 
         return new ReorderTrackerResponseWrapper(successfullyReorderedItems, itemsFailedToReorder);
+    }
+
+    @Override
+    @Scheduled(fixedRate = 1000000)
+    //TODO: Update cron to drive its value from application properties
+    public void sendAlarmForItemsBelowAlarmThreshold() {
+        final List<ItemAndQty> lowStockItems = itemMapper.findAllBelowAlarmThreshold();
+        lowStockItems.forEach(itemQty -> {
+            handleSendingNotificationForAlarm(vendorMapper.selectByPrimaryKey(itemQty.getId()), mapItemQtyToItem(itemQty));
+        });
+    }
+
+    @Override
+    public boolean updateStock(int itemId, int quantity) {
+        return handleUpdatingItemQuantity(itemId, quantity);
+    }
+
+    @Override
+    public ReorderTrackerResponse fulfillItemReorder(final ReorderTrackerRequest reorderTrackerRequest) {
+        final Integer statusAsInt = reorderTrackerRequest.status().equals(ReorderStatus.REORDERED.name()) ? 1 : 0;
+
+        final Item item = itemMapper.selectByPrimaryKey(reorderTrackerRequest.itemId());
+        final Integer reorderQuantity = Optional.ofNullable(item
+                .getReorderQuantity()).orElse(0);
+
+        final ReorderTracker reorderTracker = reorderTrackerMapper
+                .selectByPrimaryKey(reorderTrackerRequest.itemId(), statusAsInt, reorderTrackerRequest.date());
+
+        final Optional<StockRecord> currentStockRecord = getRecentStockRecordForItem(reorderTrackerRequest.itemId());
+        final Integer recentStockRecordQuantity = currentStockRecord.map(StockRecord::getQuantity).orElse(null);
+
+        final Integer newTotalQuantity = recentStockRecordQuantity != null ?
+                recentStockRecordQuantity + reorderQuantity : reorderQuantity;
+
+        //update the stock
+        stockRecordMapper.insert(StockRecord.builder()
+                .itemId(reorderTrackerRequest.itemId()).quantity(newTotalQuantity)
+                .effectiveDate(Date.from(Instant.now())).build());
+        //update the reorder tracker with fulfilled status
+        Date dateNow = Date.from(Instant.now());
+
+        reorderTrackerMapper.updateByPrimaryKey(new ReorderTracker(reorderTracker.getItemId(), BigInteger.TWO.intValue(), dateNow, reorderTracker.getVendorId(), ""));
+        return createReorderTrackerResponse(reorderTracker, item.getName(), dateNow, ReorderStatus.FULFILLED.name());
     }
 
     private void validateVendorData(final Integer vendorId) {
@@ -157,8 +212,7 @@ public class ItemServiceImpl implements ItemService {
     }
 
     private ItemResponse buildItemResponse(final Item item) {
-        final Optional<StockRecord> recentStockRecord = stockRecordMapper.findByItemId(item.getId())
-                .stream().max(Comparator.comparing(StockRecord::getEffectiveDate));
+        final Optional<StockRecord> recentStockRecord = getRecentStockRecordForItem(item.getId());
 
         final Integer recentStockRecordQuantity = recentStockRecord.map(StockRecord::getQuantity).orElse(null);
         return buildItemResponseGivenQuantity(item, recentStockRecordQuantity);
@@ -178,7 +232,7 @@ public class ItemServiceImpl implements ItemService {
     }
 
     private Item buildItemFromItemRequest(final ItemRequest itemRequest,
-                                          final String itemPicturesRootUrl, final Integer vendorId) {
+                                          final String itemPicturesRootUrl, final Integer vendorId, final Integer itemId) {
         Item.ItemBuilder itemBuilder = Item.builder()
                 .name(itemRequest.name())
                 .detail(itemRequest.detail())
@@ -193,12 +247,16 @@ public class ItemServiceImpl implements ItemService {
                     "Please try again by uploading new media");
         }
 
+        if (itemId != null) {
+            itemBuilder.id(itemId);
+        }
+
         return itemBuilder.build();
     }
 
-    private String insertOrUpdatePictureAndGetUrl(final MultipartFile pictureFile) {
-        if (pictureFile != null) {
-            return fileUploaderServiceCoordinator.uploadPicture(pictureFile, "");
+    private String insertPictureAndGetUrl(final String itemPictureBase64, final String itemPictureName) {
+        if (itemPictureBase64 != null) {
+            return fileUploaderServiceCoordinator.uploadPicture(itemPictureBase64, itemPictureName);
         }
         return null;
     }
@@ -207,23 +265,74 @@ public class ItemServiceImpl implements ItemService {
         final Vendor vendor = vendorMapper.selectByPrimaryKey(item.getVendorId());
 
         try {
-            if (vendor.getEmail() != null) {
-                emailService.sendEmail(vendor.getEmail(), String.format("Item: %s, reorder", item.getName()),
-                        NotificationServiceHelper.createItemReorderEmailBody(vendor.getName(), item.getName(), item.getReorderQuantity()));
-            }
-
-            if (vendor.getPhone() != null) {
-                smsService.sendSMS(vendor.getPhone(),
-                        NotificationServiceHelper.createItemReorderSMSBody(item.getName(), item.getReorderQuantity()));
-            }
-            //TODO: update the status to pass the string instead of integer
-            reorderTrackerMapper.insert(new ReorderTracker(item.getId(), Integer.parseInt(ReorderStatus.REORDERED.name()) , Date.from(Instant.now()), vendor.getId(), ""));
-            return new ReorderTrackerResponse(item.getId(), item.getVendorId(), ReorderStatus.REORDERED, "");
+            handleSendingNotificationForEmail(vendor, item);
+            Date dateNow = Date.from(Instant.now());
+            reorderTrackerMapper.insert(new ReorderTracker(item.getId(), BigInteger.ONE.intValue(), dateNow, vendor.getId(), ""));
+            return new ReorderTrackerResponse(item.getId(), item.getName(), item.getVendorId(), ReorderStatus.REORDERED.name(), "", dateNow);
         } catch (Exception e) {
-            //TODO: update the status to pass the string instead of integer
-            reorderTrackerMapper.insert(new ReorderTracker(item.getId(), Integer.parseInt(ReorderStatus.FAILED.name()) , Date.from(Instant.now()), vendor.getId(), e.getMessage()));
+            Date dateNow = Date.from(Instant.now());
+            reorderTrackerMapper.insert(new ReorderTracker(item.getId(), BigInteger.ZERO.intValue() , dateNow, vendor.getId(), e.getMessage()));
             return new
-                    ReorderTrackerResponse(item.getId(), item.getVendorId(), ReorderStatus.FAILED, e.getMessage());
+                    ReorderTrackerResponse(item.getId(), item.getName(), item.getVendorId(), ReorderStatus.FAILED.name(), e.getMessage(), dateNow);
         }
+    }
+
+    private void handleSendingNotificationForAlarm(final Vendor vendor, final Item item) {
+        if (vendor.getEmail() != null) {
+            emailService.sendEmail(vendor.getEmail(), String.format("Item: %s, alarm", item.getName()),
+                    NotificationServiceHelper.createItemAlarmEmailBody(vendor.getName(), item.getName()));
+        }
+
+        if (vendor.getPhone() != null) {
+            smsService.sendSMS(vendor.getPhone(),
+                    NotificationServiceHelper.createItemAlarmSMSBody(item.getName()));
+        }
+    }
+
+    private void handleSendingNotificationForEmail(final Vendor vendor, final Item item) {
+        if (vendor.getEmail() != null) {
+            emailService.sendEmail(vendor.getEmail(), String.format("Item: %s, reorder", item.getName()),
+                    NotificationServiceHelper.createItemReorderEmailBody(vendor.getName(), item.getName(), item.getReorderQuantity()));
+        }
+
+        if (vendor.getPhone() != null) {
+            smsService.sendSMS(vendor.getPhone(),
+                    NotificationServiceHelper.createItemReorderSMSBody(item.getName(), item.getReorderQuantity()));
+        }
+    }
+
+    private ReorderTrackerResponse mapReorderTrackerToReorderTrackerResponse(final ReorderTracker reorderTracker) {
+        final ReorderStatus reorderStatus = reorderTracker.getStatus() == 1 ? ReorderStatus.REORDERED : ReorderStatus.FAILED;
+        return createReorderTrackerResponse(reorderTracker, itemMapper.selectByPrimaryKey(reorderTracker.getItemId()).getName(),
+                reorderStatus.name());
+    }
+
+    private String createItemPictureName(final String itemName,final Integer vendorId) {
+        return  String.format("%s-%s-%s.%s", itemName, vendorId, System.currentTimeMillis(), "jpg");
+    }
+
+    private boolean handleUpdatingItemQuantity(final Integer itemId, final Integer quantity) {
+        int update = stockRecordMapper.updateQuantity(itemId, quantity);
+        return update>0;
+    }
+
+    private Optional<StockRecord> getRecentStockRecordForItem(final Integer itemId) {
+        return stockRecordMapper.findByItemId(itemId)
+                .stream().max(Comparator.comparing(StockRecord::getEffectiveDate));
+    }
+
+    private ReorderTrackerResponse createReorderTrackerResponse(final ReorderTracker reorderTracker, final String itemName, final String reorderStatus) {
+        return new ReorderTrackerResponse(reorderTracker.getItemId(), itemName, reorderTracker.getVendorId(), reorderStatus,
+                "", reorderTracker.getDate());
+    }
+    private ReorderTrackerResponse createReorderTrackerResponse(final ReorderTracker reorderTracker, final String itemName,
+                                                                final Date effectiveDate, final String reorderStatus) {
+        return new ReorderTrackerResponse(reorderTracker.getItemId(), itemName, reorderTracker.getVendorId(),
+                reorderStatus, "", effectiveDate);
+    }
+
+    private Item mapItemQtyToItem(final ItemAndQty itemAndQty) {
+        return new Item(itemAndQty.getId(), itemAndQty.getName(), itemAndQty.getDetail(), itemAndQty.getPics(), itemAndQty.getAlarmThreshold(),
+                itemAndQty.getQuantityThreshold(), itemAndQty.getVendorId(), itemAndQty.getEffectiveDate(), itemAndQty.getReorderQuantity());
     }
 }

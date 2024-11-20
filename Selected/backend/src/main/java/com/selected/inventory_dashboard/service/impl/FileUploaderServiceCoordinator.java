@@ -25,4 +25,13 @@ public class FileUploaderServiceCoordinator {
             throw new RuntimeException("Unsupported storage type: " + storageType);
         }
     }
+
+    //Returns the url for the picture, takes a base64 string of the image
+    public String uploadPicture(final String base64, final String fileName) {
+        if (storageType.equalsIgnoreCase("local")) {
+            return (localUploadBaseUrl + localPictureFileUploadService.savePictureFile(base64, fileName));
+        } else {
+            throw new RuntimeException("Unsupported storage type: " + storageType);
+        }
+    }
 }

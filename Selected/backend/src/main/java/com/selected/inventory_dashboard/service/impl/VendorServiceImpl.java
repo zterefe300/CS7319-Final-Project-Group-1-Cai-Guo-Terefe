@@ -36,7 +36,9 @@ public class VendorServiceImpl implements VendorService {
         validateVendorNameExistence(vendorRequest);
         validateVendorContactInfoExistence(vendorRequest);
 
-        final Integer vendorId = vendorMapper.insert(buildVendorDataFromVendorRequest(vendorRequest));
+        final Vendor vendorToCreate = buildVendor(vendorRequest);
+        vendorMapper.insert(vendorToCreate);
+        final Integer vendorId = vendorToCreate.getId();
         return mapVendorToVendorResponse(vendorMapper.selectByPrimaryKey(vendorId));
     }
 
@@ -45,7 +47,7 @@ public class VendorServiceImpl implements VendorService {
         validateVendorNameExistence(vendorRequest);
         validateVendorContactInfoExistence(vendorRequest);
 
-        vendorMapper.updateByPrimaryKey(buildVendorDataFromVendorRequest(vendorRequest));
+        vendorMapper.updateByPrimaryKey(buildVendor(vendorRequest,vendorId));
         return mapVendorToVendorResponse(vendorMapper.selectByPrimaryKey(vendorId));
     }
 
@@ -64,11 +66,22 @@ public class VendorServiceImpl implements VendorService {
         );
     }
 
-    private Vendor buildVendorDataFromVendorRequest(VendorRequest vendorRequest) {
-        return Vendor.builder().name(vendorRequest.name())
+    private Vendor buildVendor(final VendorRequest vendorRequest) {
+        return buildVendor(vendorRequest, null);
+    }
+
+    private Vendor buildVendor(final VendorRequest vendorRequest,
+                                                  final Integer vendorId) {
+       final Vendor.VendorBuilder vendorBuilder =  Vendor.builder().id(vendorId).name(vendorRequest.name())
                 .email(vendorRequest.email()).phone(vendorRequest.phone())
                 .createTime(Date.from(Instant.now()))
-                .updateTime(Date.from(Instant.now())).build();
+                .updateTime(Date.from(Instant.now()));
+
+        if (vendorId != null) {
+            vendorBuilder.id(vendorId);
+        }
+
+        return vendorBuilder.build();
     }
 
     private void validateVendorNameExistence(final VendorRequest vendorRequest) {

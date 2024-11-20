@@ -1,7 +1,9 @@
 package com.selected.inventory_dashboard.controller;
 
 import com.selected.inventory_dashboard.dtovo.req.ItemRequest;
+import com.selected.inventory_dashboard.dtovo.req.ReorderTrackerRequest;
 import com.selected.inventory_dashboard.dtovo.res.ItemResponse;
+import com.selected.inventory_dashboard.dtovo.res.ReorderTrackerResponse;
 import com.selected.inventory_dashboard.dtovo.res.ReorderTrackerResponseWrapper;
 import com.selected.inventory_dashboard.service.interfaces.ItemService;
 import org.springframework.http.ResponseEntity;
@@ -34,6 +36,11 @@ public class ItemController {
         return ResponseEntity.ok(itemService.getAllItemsWithLimit(limit));
     }
 
+    @GetMapping("/reorderTrackerData")
+    public ResponseEntity<List<ReorderTrackerResponse>> getReorderTrackerData() {
+        return ResponseEntity.ok(itemService.getReorderTrackerData());
+    }
+
     @PostMapping
     public ResponseEntity<ItemResponse> createItem(@RequestBody ItemRequest itemRequest) {
         return ResponseEntity.ok(itemService.insertNewItem(itemRequest));
@@ -44,13 +51,18 @@ public class ItemController {
         return ResponseEntity.ok(itemService.updateItem(itemId, itemRequest));
     }
 
-    @DeleteMapping("/{itemId}")
-    public ResponseEntity<Boolean> deleteItem(@PathVariable Integer itemId) {
-        return ResponseEntity.ok(itemService.deleteItem(itemId));
+    @PutMapping("/fulfillItemReorder")
+    public ResponseEntity<ReorderTrackerResponse> fulfillItemReorder(@RequestBody ReorderTrackerRequest reorderTrackerRequest) {
+        return ResponseEntity.ok(itemService.fulfillItemReorder(reorderTrackerRequest));
     }
 
     @PutMapping("/reorder")
     public ResponseEntity<ReorderTrackerResponseWrapper> reorderLowStockItems() {
         return ResponseEntity.ok(itemService.reorderItemsLowStockItems());
+    }
+
+    @DeleteMapping("/{itemId}")
+    public ResponseEntity<Boolean> deleteItem(@PathVariable Integer itemId) {
+        return ResponseEntity.ok(itemService.deleteItem(itemId));
     }
 }
