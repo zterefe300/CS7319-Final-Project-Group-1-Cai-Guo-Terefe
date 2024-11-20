@@ -15,5 +15,5 @@ public interface ReorderTrackerMapper {
 
     List<ReorderTracker> selectAll();
 
-    int updateByPrimaryKey(ReorderTracker record);
+    int updateByPrimaryKey(ReorderTracker record, @Param("selectByPrimaryKey") Integer statusSearchBy);
 }

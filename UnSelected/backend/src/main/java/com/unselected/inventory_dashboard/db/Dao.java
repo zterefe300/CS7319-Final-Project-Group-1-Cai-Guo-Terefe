@@ -187,6 +187,37 @@ public class Dao {
         return items;
     }
 
+    public List<ItemAndQty> findAllBelowAlarmThreshold(){
+        String sql = "select item.*,stock_record.quantity from item left join stock_record on item.id=stock_record.item_id\n" +
+                "    where stock_record.quantity < item.alarm_threshold ";
+        List<ItemAndQty> items = new ArrayList<>();
+
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+
+            while (rs.next()) {
+                ItemAndQty item = new ItemAndQty();
+                item.setId(rs.getInt("id"));
+                item.setName(rs.getString("name"));
+                item.setDetail(rs.getString("detail"));
+                item.setPics(rs.getString("pics"));
+                item.setAlarmThreshold(rs.getInt("alarm_threshold"));
+                item.setQuantityThreshold(rs.getInt("quantity_threshold"));
+                item.setVendorId(rs.getInt("vendor_id"));
+                item.setEffectiveDate(rs.getTimestamp("effective_date"));
+                item.setReorderQuantity(rs.getInt("reorder_quantity"));
+                item.setQuantity(rs.getInt("quantity"));
+
+                items.add(item);
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+        return items;
+    }
+
+
 
     //----------------------------------StockRecord------------------------------------------------------------------------------
 

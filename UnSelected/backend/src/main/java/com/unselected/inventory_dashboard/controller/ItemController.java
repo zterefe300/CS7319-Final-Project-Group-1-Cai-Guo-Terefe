@@ -111,36 +111,59 @@ public class ItemController {
         return ResponseEntity.ok(reorderItems());
     }
 
-    @Scheduled(cron = "0 0 2 * * ?")
+    @Scheduled(fixedRate = 30000)
     ReorderTrackerResponseWrapper reorderItems() {
         final List<ReorderTrackerResponse> successfullyReorderedItems = new ArrayList<>();
         final List<ReorderTrackerResponse> itemsFailedToReorder = new ArrayList<>();
 
         final List<ItemAndQty> lowStockItems = dao.findAllBelowQtyThreshold();
-        lowStockItems.forEach(item -> {
-            final Vendor vendor = dao.getVendor(item.getVendorId());
+        lowStockItems.forEach(itemAndQty -> {
+            final Vendor vendor = dao.getVendor(itemAndQty.getVendorId());
 
             try {
-                if (vendor.getEmail() != null) {
-                    NotificationUtil.sendEmail(mailSender, vendor.getEmail(), String.format("Item: %s, reorder", item.getName()),
-                            NotificationUtil.createItemReorderEmailBody(vendor.getName(), item.getName(), item.getReorderQuantity()));
-                }
-
-                if (vendor.getPhone() != null) {
-                    NotificationUtil.sendSMS(vendor.getPhone(),
-                            NotificationUtil.createItemReorderSMSBody(item.getName(), item.getReorderQuantity()));
-                }
+                handleSendingNotificationForReorder(vendor, mapItemQtyToItem(itemAndQty));
                 Date dateNow = Date.from(Instant.now());
-                dao.createReorderTracker(new ReorderTracker(item.getId(), BigInteger.ONE.intValue(), dateNow, vendor.getId(), ""));
-                successfullyReorderedItems.add(new ReorderTrackerResponse(item.getId(), item.getName(), item.getVendorId(), ReorderStatus.REORDERED.name(), "", dateNow));
+                dao.createReorderTracker(new ReorderTracker(itemAndQty.getId(), BigInteger.ONE.intValue(), dateNow, vendor.getId(), ""));
+                successfullyReorderedItems.add(new ReorderTrackerResponse(itemAndQty.getId(), itemAndQty.getName(), itemAndQty.getVendorId(), ReorderStatus.REORDERED.name(), "", dateNow));
             } catch (Exception e) {
                 Date dateNow = Date.from(Instant.now());
-                dao.createReorderTracker(new ReorderTracker(item.getId(), BigInteger.ZERO.intValue(), dateNow, vendor.getId(), e.getMessage()));
-                itemsFailedToReorder.add(new ReorderTrackerResponse(item.getId(), item.getName(), item.getVendorId(), ReorderStatus.FAILED.name(), e.getMessage(), dateNow));
+                dao.createReorderTracker(new ReorderTracker(itemAndQty.getId(), BigInteger.ZERO.intValue(), dateNow, vendor.getId(), e.getMessage()));
+                itemsFailedToReorder.add(new ReorderTrackerResponse(itemAndQty.getId(), itemAndQty.getName(), itemAndQty.getVendorId(), ReorderStatus.FAILED.name(), e.getMessage(), dateNow));
             }
         });
 
         return new ReorderTrackerResponseWrapper(successfullyReorderedItems, itemsFailedToReorder);
+    }
+
+    @Scheduled(fixedRate = 1000000)
+    //TODO: Update cron to drive its value from application properties
+    public void sendAlarmForItemsBelowAlarmThreshold() {
+        final List<ItemAndQty> lowStockItems = dao.findAllBelowAlarmThreshold();
+        lowStockItems.forEach(itemAndQty -> handleSendingNotificationForAlarm(dao.getVendor(itemAndQty.getId()), mapItemQtyToItem(itemAndQty)));
+    }
+
+    private void handleSendingNotificationForAlarm(final Vendor vendor, final Item item) {
+        if (vendor.getEmail() != null) {
+            NotificationUtil.sendEmail(mailSender, vendor.getEmail(), String.format("Item: %s, alarm", item.getName()),
+                    NotificationUtil.createItemAlarmEmailBody(vendor.getName(), item.getName()));
+        }
+
+        if (vendor.getPhone() != null) {
+            NotificationUtil.sendSMS(vendor.getPhone(),
+                    NotificationUtil.createItemAlarmSMSBody(item.getName()));
+        }
+    }
+
+    private void handleSendingNotificationForReorder(final Vendor vendor, final Item item) {
+        if (vendor.getEmail() != null) {
+            NotificationUtil.sendEmail(mailSender, vendor.getEmail(), String.format("Item: %s, reorder", item.getName()),
+                    NotificationUtil.createItemReorderEmailBody(vendor.getName(), item.getName(), item.getReorderQuantity()));
+        }
+
+        if (vendor.getPhone() != null) {
+            NotificationUtil.sendSMS(vendor.getPhone(),
+                    NotificationUtil.createItemReorderSMSBody(item.getName(), item.getReorderQuantity()));
+        }
     }
 
     private ItemResponse mapItemToItemResponse(Item item) {
@@ -190,5 +213,10 @@ public class ItemController {
         final String reorderStatus = reorderTracker.getStatus() == 1 ? ReorderStatus.REORDERED.name() : ReorderStatus.FAILED.name();
         return new ReorderTrackerResponse(reorderTracker.getItemId(), dao.getItem(reorderTracker.getItemId()).getName(), reorderTracker.getVendorId(),
                 reorderStatus, reorderTracker.getErrorMessage(), reorderTracker.getDate());
+    }
+
+    private Item mapItemQtyToItem(final ItemAndQty itemAndQty) {
+        return new Item(itemAndQty.getId(), itemAndQty.getName(), itemAndQty.getDetail(), itemAndQty.getPics(), itemAndQty.getAlarmThreshold(),
+                itemAndQty.getQuantityThreshold(), itemAndQty.getVendorId(), itemAndQty.getEffectiveDate(), itemAndQty.getReorderQuantity());
     }
 }
