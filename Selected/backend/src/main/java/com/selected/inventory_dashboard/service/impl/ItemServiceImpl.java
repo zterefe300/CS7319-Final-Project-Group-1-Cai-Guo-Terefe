@@ -89,7 +89,7 @@ public class ItemServiceImpl implements ItemService {
         final Integer itemId = itemToInsert.getId();
         final Item item = itemMapper.selectByPrimaryKey(itemId);
 
-        final Integer quantity = 1;
+        final Integer quantity = itemRequest.quantity();
         //Create stock record of the item with quantity one since we only add a single item.
         stockRecordMapper.insert(StockRecord.builder().itemId(itemId)
                 .quantity(quantity).effectiveDate(Date.from(Instant.now())).build());
@@ -172,13 +172,15 @@ public class ItemServiceImpl implements ItemService {
 
         final Integer newTotalQuantity = recentStockRecordQuantity != null ?
                 recentStockRecordQuantity + reorderQuantity : reorderQuantity;
+
         //update the stock
         stockRecordMapper.insert(StockRecord.builder()
                 .itemId(reorderTrackerRequest.itemId()).quantity(newTotalQuantity)
                 .effectiveDate(Date.from(Instant.now())).build());
         //update the reorder tracker with fulfilled status
         Date dateNow = Date.from(Instant.now());
-        reorderTrackerMapper.insert(new ReorderTracker(reorderTracker.getItemId(), BigInteger.TWO.intValue(), dateNow, reorderTracker.getVendorId(), ""));
+
+        reorderTrackerMapper.updateByPrimaryKey(new ReorderTracker(reorderTracker.getItemId(), BigInteger.TWO.intValue(), dateNow, reorderTracker.getVendorId(), ""));
         return createReorderTrackerResponse(reorderTracker, item.getName(), dateNow, ReorderStatus.FULFILLED.name());
     }
 

@@ -55,6 +55,10 @@ function ItemTrackingPage() {
       .then((resp) => resp.json())
       .then((resp) => {
         const filterData = resp.filter(item => item.reorderStatus === "REORDERED")
+        const result = new Set()
+
+        const sortedDateData = filterData.sort((a, b ) => a.effectiveDate - b.effectiveDate)
+        console.log(sortedDateData)
         setLoading(false);
         setData(filterData);
       })
@@ -70,12 +74,12 @@ function ItemTrackingPage() {
     
     const payload = {
       itemId: result.itemId,
-      reorderStatus: result.reorderStatus,
-      effectiveDate: new Date(result.effectiveDate)
+      status: result.reorderStatus,
+      date: result.effectiveDate
     }
 
-    fetch(`http://localhost:8080/inventory/selected/api/fulfillItemReorder/${itemId}`, {
-      method: "POST",
+    fetch(`http://localhost:8080/inventory/selected/api/items/fulfillItemReorder`, {
+      method: "PUT",
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${token}`,
