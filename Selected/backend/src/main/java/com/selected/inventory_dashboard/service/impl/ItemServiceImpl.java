@@ -169,14 +169,16 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public ReorderTrackerResponse fulfillItemReorder(final ReorderTrackerRequest reorderTrackerRequest) {
-        final Integer statusAsInt = reorderTrackerRequest.status().equals(ReorderStatus.REORDERED.name()) ? 1 : 0;
+        if (!reorderTrackerRequest.status().equals(ReorderStatus.REORDERED.name())) {
+            throw new RuntimeException("Can't fulfill order that is not in reorder status");
+        }
 
         final Item item = itemMapper.selectByPrimaryKey(reorderTrackerRequest.itemId());
         final Integer reorderQuantity = Optional.ofNullable(item
                 .getReorderQuantity()).orElse(0);
 
         final ReorderTracker reorderTracker = reorderTrackerMapper
-                .selectByPrimaryKey(reorderTrackerRequest.itemId(), statusAsInt, reorderTrackerRequest.date());
+                .selectByPrimaryKey(reorderTrackerRequest.itemId(), BigInteger.ONE.intValue(), reorderTrackerRequest.date());
 
         final Optional<StockRecord> currentStockRecord = getRecentStockRecordForItem(reorderTrackerRequest.itemId());
         final Integer recentStockRecordQuantity = currentStockRecord.map(StockRecord::getQuantity).orElse(null);
@@ -303,7 +305,7 @@ public class ItemServiceImpl implements ItemService {
     }
 
     private ReorderTrackerResponse mapReorderTrackerToReorderTrackerResponse(final ReorderTracker reorderTracker) {
-        final ReorderStatus reorderStatus = reorderTracker.getStatus() == 1 ? ReorderStatus.REORDERED : ReorderStatus.FAILED;
+        final ReorderStatus reorderStatus = ReorderStatus.getReorderStatusFromNumber(reorderTracker.getStatus());
         return createReorderTrackerResponse(reorderTracker, itemMapper.selectByPrimaryKey(reorderTracker.getItemId()).getName(),
                 reorderStatus.name());
     }

@@ -81,7 +81,7 @@ public class ItemController {
 
     @PutMapping("/fulfillReorder")
     public ReorderTrackerResponse fulfillItemReorder(@RequestBody final ReorderTrackerRequest reorderTrackerRequest) {
-        if (reorderTrackerRequest.status().equals(ReorderStatus.REORDERED.name())) {
+        if (!reorderTrackerRequest.status().equals(ReorderStatus.REORDERED.name())) {
             throw new RuntimeException("Can't fulfill order that is not in reorder status");
         }
 
