@@ -18,7 +18,7 @@ function ItemDetailPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetch(`http://localhost:8080/inventory/selected/api/items`, {
+    fetch(`http://localhost:8080/inventory/unSelected/api/items`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -32,7 +32,7 @@ function ItemDetailPage() {
         setLoading(false)
 
         if(getItemData.pictureUrl.length > 0) {
-          fetch(`http://localhost:8080/inventory/selected${getItemData.pictureUrl}`, {
+          fetch(`http://localhost:8080/inventory/unSelected${getItemData.pictureUrl}`, {
             method: "GET",
             headers: {
               "Content-Type": "application/json",
@@ -55,7 +55,7 @@ function ItemDetailPage() {
   };
 
   const handleDeleteButton = () => {
-    fetch(`http://localhost:8080/inventory/selected/api/items/${id}`, {
+    fetch(`http://localhost:8080/inventory/unSelected/api/items/${id}`, {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",
