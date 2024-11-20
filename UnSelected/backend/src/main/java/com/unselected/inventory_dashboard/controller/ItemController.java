@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 import java.math.BigInteger;
 import java.time.Instant;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/item")
@@ -40,7 +41,8 @@ public class ItemController {
     @GetMapping("/getReorderTrackerData")
     public ResponseEntity<List<ReorderTrackerResponse>> getReorderTrackerData() {
         return ResponseEntity.ok(dao.getAllReorderTrackers()
-                .stream().map(this::mapReorderTrackerToReorderTrackerResponse).toList());
+                .stream().collect(Collectors.groupingBy(ReorderTracker::getItemId, Collectors.maxBy(Comparator.comparing(ReorderTracker::getDate))))
+                .values().stream().map(Optional::orElseThrow).toList().stream().map(this::mapReorderTrackerToReorderTrackerResponse).toList());
     }
 
     @PostMapping
@@ -111,7 +113,7 @@ public class ItemController {
         return ResponseEntity.ok(reorderItems());
     }
 
-    @Scheduled(fixedRate = 30000)
+    @Scheduled(cron = "0 0 2 * * ?")
     ReorderTrackerResponseWrapper reorderItems() {
         final List<ReorderTrackerResponse> successfullyReorderedItems = new ArrayList<>();
         final List<ReorderTrackerResponse> itemsFailedToReorder = new ArrayList<>();
@@ -135,7 +137,7 @@ public class ItemController {
         return new ReorderTrackerResponseWrapper(successfullyReorderedItems, itemsFailedToReorder);
     }
 
-    @Scheduled(fixedRate = 1000000)
+    @Scheduled(cron = "0 0 2 * * ?")
     //TODO: Update cron to drive its value from application properties
     public void sendAlarmForItemsBelowAlarmThreshold() {
         final List<ItemAndQty> lowStockItems = dao.findAllBelowAlarmThreshold();
