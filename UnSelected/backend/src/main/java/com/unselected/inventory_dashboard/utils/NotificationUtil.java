@@ -20,17 +20,13 @@ public class NotificationUtil {
     private String twilioAuthToken;
     @Value("${twilio.phone.number}")
     private static String twilioPhoneNumber;
-    @Value("${email.mode}")
-    private static String emailMode;
-    @Value("${sms.mode}")
-    private static String smsMode;
 
     @PostConstruct
     public void intiTwilio() {
         Twilio.init(twilioAccountSid, twilioAuthToken);
     }
 
-    public static void sendEmail(final JavaMailSender mailSender,  final String to, final String subject, final String body) {
+    public static void sendEmail(final JavaMailSender mailSender,  final String to, final String subject, final String body, final String emailMode) {
         if (emailMode.equals(NotificationMode.TEST.name())) {
             logger.debug("Test mode: sent the email below :)");
             logger.info(body);
@@ -43,7 +39,7 @@ public class NotificationUtil {
         mailSender.send(message);
     }
 
-    public static void sendSMS(final String toPhoneNumber, final String message) {
+    public static void sendSMS(final String toPhoneNumber, final String message, final String smsMode) {
         if (smsMode.equals(NotificationMode.TEST.name())) {
             logger.debug("Test mode: sent message below");
             logger.info(message);

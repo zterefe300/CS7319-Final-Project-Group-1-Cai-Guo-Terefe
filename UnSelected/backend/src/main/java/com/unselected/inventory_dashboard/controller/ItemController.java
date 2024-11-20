@@ -10,6 +10,7 @@ import com.unselected.inventory_dashboard.entity.Vendor;
 import com.unselected.inventory_dashboard.utils.NotificationUtil;
 import com.unselected.inventory_dashboard.utils.PictureUploadUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -27,6 +28,10 @@ public class ItemController {
     private Dao dao;
     @Autowired
     private JavaMailSender mailSender;
+    @Value("${email.mode}")
+    private String emailMode;
+    @Value("${sms.mode}")
+    private String smsMode;
 
     @GetMapping
     public ResponseEntity<List<ItemResponse>> getAllItems() {
@@ -137,7 +142,7 @@ public class ItemController {
         return new ReorderTrackerResponseWrapper(successfullyReorderedItems, itemsFailedToReorder);
     }
 
-    @Scheduled(cron = "0 0 2 * * ?")
+    @Scheduled(fixedRate = 3000)
     //TODO: Update cron to drive its value from application properties
     public void sendAlarmForItemsBelowAlarmThreshold() {
         final List<ItemAndQty> lowStockItems = dao.findAllBelowAlarmThreshold();
@@ -147,24 +152,24 @@ public class ItemController {
     private void handleSendingNotificationForAlarm(final Vendor vendor, final Item item) {
         if (vendor.getEmail() != null) {
             NotificationUtil.sendEmail(mailSender, vendor.getEmail(), String.format("Item: %s, alarm", item.getName()),
-                    NotificationUtil.createItemAlarmEmailBody(vendor.getName(), item.getName()));
+                    NotificationUtil.createItemAlarmEmailBody(vendor.getName(), item.getName()), emailMode);
         }
 
         if (vendor.getPhone() != null) {
             NotificationUtil.sendSMS(vendor.getPhone(),
-                    NotificationUtil.createItemAlarmSMSBody(item.getName()));
+                    NotificationUtil.createItemAlarmSMSBody(item.getName()), smsMode);
         }
     }
 
     private void handleSendingNotificationForReorder(final Vendor vendor, final Item item) {
         if (vendor.getEmail() != null) {
             NotificationUtil.sendEmail(mailSender, vendor.getEmail(), String.format("Item: %s, reorder", item.getName()),
-                    NotificationUtil.createItemReorderEmailBody(vendor.getName(), item.getName(), item.getReorderQuantity()));
+                    NotificationUtil.createItemReorderEmailBody(vendor.getName(), item.getName(), item.getReorderQuantity()), emailMode);
         }
 
         if (vendor.getPhone() != null) {
             NotificationUtil.sendSMS(vendor.getPhone(),
-                    NotificationUtil.createItemReorderSMSBody(item.getName(), item.getReorderQuantity()));
+                    NotificationUtil.createItemReorderSMSBody(item.getName(), item.getReorderQuantity()), smsMode);
         }
     }
 
