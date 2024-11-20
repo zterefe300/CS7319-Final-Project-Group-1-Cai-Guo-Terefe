@@ -26,8 +26,7 @@
       error_message = #{errorMessage,jdbcType=VARCHAR},
       status = #{status,jdbcType=INTEGER}
     where item_id = #{itemId,jdbcType=INTEGER}
-      and status = #{status,jdbcType=INTEGER}
-      and date = #{date,jdbcType=TIMESTAMP}
+      and status = 1
   </update>
   <select id="selectByPrimaryKey" parameterType="map" resultMap="BaseResultMap">
     select item_id, status, date, vendor_id, error_message

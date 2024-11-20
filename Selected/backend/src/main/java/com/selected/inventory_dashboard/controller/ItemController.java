@@ -51,7 +51,7 @@ public class ItemController {
         return ResponseEntity.ok(itemService.updateItem(itemId, itemRequest));
     }
 
-    @PutMapping("/fulfillItemReorder/{itemId}")
+    @PutMapping("/fulfillItemReorder")
     public ResponseEntity<ReorderTrackerResponse> fulfillItemReorder(@RequestBody ReorderTrackerRequest reorderTrackerRequest) {
         return ResponseEntity.ok(itemService.fulfillItemReorder(reorderTrackerRequest));
     }
