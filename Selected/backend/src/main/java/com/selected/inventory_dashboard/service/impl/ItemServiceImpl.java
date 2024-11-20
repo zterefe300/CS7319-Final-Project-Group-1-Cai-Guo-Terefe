@@ -29,6 +29,7 @@ import org.springframework.stereotype.Service;
 import java.math.BigInteger;
 import java.time.Instant;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class ItemServiceImpl implements ItemService {
@@ -66,8 +67,8 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public List<ReorderTrackerResponse> getReorderTrackerData() {
-        return reorderTrackerMapper.selectAll().stream()
-                .map(this::mapReorderTrackerToReorderTrackerResponse).toList();
+        return reorderTrackerMapper.selectAll().stream().collect(Collectors.groupingBy(ReorderTracker::getItemId, Collectors.maxBy(Comparator.comparing(ReorderTracker::getDate))))
+                .values().stream().map(Optional::orElseThrow).toList().stream().map(this::mapReorderTrackerToReorderTrackerResponse).toList();
     }
 
     ///TODO: Breakdown service into methods. Add error handling for insert operations
@@ -134,7 +135,7 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
-    @Scheduled(fixedRate = 30000)
+    @Scheduled(cron = "0 0 2 * * ?")
     //TODO: Update cron to drive its value from application properties
     public ReorderTrackerResponseWrapper reorderItemsLowStockItems() {
         final List<ReorderTrackerResponse> successfullyReorderedItems = new ArrayList<>();
@@ -152,7 +153,7 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
-    @Scheduled(fixedRate = 1000000)
+    @Scheduled(cron = "0 0 2 * * ?")
     //TODO: Update cron to drive its value from application properties
     public void sendAlarmForItemsBelowAlarmThreshold() {
         final List<ItemAndQty> lowStockItems = itemMapper.findAllBelowAlarmThreshold();
@@ -168,14 +169,16 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public ReorderTrackerResponse fulfillItemReorder(final ReorderTrackerRequest reorderTrackerRequest) {
-        final Integer statusAsInt = reorderTrackerRequest.status().equals(ReorderStatus.REORDERED.name()) ? 1 : 0;
+        if (!reorderTrackerRequest.status().equals(ReorderStatus.REORDERED.name())) {
+            throw new RuntimeException("Can't fulfill order that is not in reorder status");
+        }
 
         final Item item = itemMapper.selectByPrimaryKey(reorderTrackerRequest.itemId());
         final Integer reorderQuantity = Optional.ofNullable(item
                 .getReorderQuantity()).orElse(0);
 
         final ReorderTracker reorderTracker = reorderTrackerMapper
-                .selectByPrimaryKey(reorderTrackerRequest.itemId(), statusAsInt, reorderTrackerRequest.date());
+                .selectByPrimaryKey(reorderTrackerRequest.itemId(), BigInteger.ONE.intValue(), reorderTrackerRequest.date());
 
         final Optional<StockRecord> currentStockRecord = getRecentStockRecordForItem(reorderTrackerRequest.itemId());
         final Integer recentStockRecordQuantity = currentStockRecord.map(StockRecord::getQuantity).orElse(null);
@@ -190,7 +193,7 @@ public class ItemServiceImpl implements ItemService {
         //update the reorder tracker with fulfilled status
         Date dateNow = Date.from(Instant.now());
 
-        reorderTrackerMapper.updateByPrimaryKey(new ReorderTracker(reorderTracker.getItemId(), BigInteger.TWO.intValue(), dateNow, reorderTracker.getVendorId(), ""));
+        reorderTrackerMapper.insert(new ReorderTracker(reorderTracker.getItemId(), BigInteger.TWO.intValue(), dateNow, reorderTracker.getVendorId(), ""));
         return createReorderTrackerResponse(reorderTracker, item.getName(), dateNow, ReorderStatus.FULFILLED.name());
     }
 
@@ -302,7 +305,7 @@ public class ItemServiceImpl implements ItemService {
     }
 
     private ReorderTrackerResponse mapReorderTrackerToReorderTrackerResponse(final ReorderTracker reorderTracker) {
-        final ReorderStatus reorderStatus = reorderTracker.getStatus() == 1 ? ReorderStatus.REORDERED : ReorderStatus.FAILED;
+        final ReorderStatus reorderStatus = ReorderStatus.getReorderStatusFromNumber(reorderTracker.getStatus());
         return createReorderTrackerResponse(reorderTracker, itemMapper.selectByPrimaryKey(reorderTracker.getItemId()).getName(),
                 reorderStatus.name());
     }
