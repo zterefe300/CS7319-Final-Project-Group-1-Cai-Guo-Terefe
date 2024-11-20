@@ -143,9 +143,9 @@ public class ItemServiceImpl implements ItemService {
         Map<String, List<ReorderTrackerResponse>> statusListMap = Map.of(ReorderStatus.REORDERED.name(), successfullyReorderedItems,
                 ReorderStatus.FAILED.name(), itemsFailedToReorder);
 
-        final List<ItemAndQty> lowStockItems = itemMapper.findAllBelowQtyThreshold();
-        lowStockItems.forEach(itemQty -> {
-            final ReorderTrackerResponse reorderTrackerResponse =  handleSingleItemReorder(mapItemQtyToItem(itemQty));
+        final List<Item> lowStockItems = itemMapper.findAllBelowQtyThreshold();
+        lowStockItems.forEach(item -> {
+            final ReorderTrackerResponse reorderTrackerResponse =  handleSingleItemReorder(item);
             statusListMap.get(reorderTrackerResponse.reorderStatus()).add(reorderTrackerResponse);
         });
 
@@ -156,10 +156,8 @@ public class ItemServiceImpl implements ItemService {
     @Scheduled(cron = "0 0 2 * * ?")
     //TODO: Update cron to drive its value from application properties
     public void sendAlarmForItemsBelowAlarmThreshold() {
-        final List<ItemAndQty> lowStockItems = itemMapper.findAllBelowAlarmThreshold();
-        lowStockItems.forEach(itemQty -> {
-            handleSendingNotificationForAlarm(vendorMapper.selectByPrimaryKey(itemQty.getId()), mapItemQtyToItem(itemQty));
-        });
+        final List<Item> lowStockItems = itemMapper.findAllBelowAlarmThreshold();
+        lowStockItems.forEach(item -> handleSendingNotificationForAlarm(vendorMapper.selectByPrimaryKey(item.getId()), item));
     }
 
     @Override
