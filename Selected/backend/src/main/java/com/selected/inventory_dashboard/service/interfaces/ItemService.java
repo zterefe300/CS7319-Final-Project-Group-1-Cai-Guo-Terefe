@@ -17,6 +17,7 @@ public interface ItemService {
     ReorderTrackerResponse fulfillItemReorder(ReorderTrackerRequest reorderTrackerRequest);
     boolean deleteItem(Integer itemId);
     ReorderTrackerResponseWrapper reorderItemsLowStockItems();
+    void sendAlarmForItemsBelowAlarmThreshold();
 
     boolean updateStock(int itemId, int quantity);
 }

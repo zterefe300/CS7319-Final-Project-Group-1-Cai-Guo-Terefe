@@ -68,4 +68,8 @@
     select item.*,stock_record.quantity from item left join stock_record on item.id=stock_record.item_id
     where <![CDATA[stock_record.quantity < item.quantity_threshold ]]>
   </select>
+  <select id="findAllBelowAlarmThreshold" resultMap="BaseResultMap">
+    select item.*,stock_record.quantity from item left join stock_record on item.id=stock_record.item_id
+    where <![CDATA[stock_record.quantity < item.alarm_threshold ]]>
+  </select>
 </mapper>

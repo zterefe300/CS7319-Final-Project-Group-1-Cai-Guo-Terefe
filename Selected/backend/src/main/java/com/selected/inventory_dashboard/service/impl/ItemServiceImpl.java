@@ -134,7 +134,7 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
-    @Scheduled(cron = "0 0 2 * * ?")
+    @Scheduled(fixedRate = 30000)
     //TODO: Update cron to drive its value from application properties
     public ReorderTrackerResponseWrapper reorderItemsLowStockItems() {
         final List<ReorderTrackerResponse> successfullyReorderedItems = new ArrayList<>();
@@ -143,12 +143,22 @@ public class ItemServiceImpl implements ItemService {
                 ReorderStatus.FAILED.name(), itemsFailedToReorder);
 
         final List<ItemAndQty> lowStockItems = itemMapper.findAllBelowQtyThreshold();
-        lowStockItems.forEach(item -> {
-            final ReorderTrackerResponse reorderTrackerResponse =  handleSingleItemReorder(item);
+        lowStockItems.forEach(itemQty -> {
+            final ReorderTrackerResponse reorderTrackerResponse =  handleSingleItemReorder(mapItemQtyToItem(itemQty));
             statusListMap.get(reorderTrackerResponse.reorderStatus()).add(reorderTrackerResponse);
         });
 
         return new ReorderTrackerResponseWrapper(successfullyReorderedItems, itemsFailedToReorder);
+    }
+
+    @Override
+    @Scheduled(fixedRate = 1000000)
+    //TODO: Update cron to drive its value from application properties
+    public void sendAlarmForItemsBelowAlarmThreshold() {
+        final List<ItemAndQty> lowStockItems = itemMapper.findAllBelowAlarmThreshold();
+        lowStockItems.forEach(itemQty -> {
+            handleSendingNotificationForAlarm(vendorMapper.selectByPrimaryKey(itemQty.getId()), mapItemQtyToItem(itemQty));
+        });
     }
 
     @Override
@@ -253,16 +263,7 @@ public class ItemServiceImpl implements ItemService {
         final Vendor vendor = vendorMapper.selectByPrimaryKey(item.getVendorId());
 
         try {
-            if (vendor.getEmail() != null) {
-                emailService.sendEmail(vendor.getEmail(), String.format("Item: %s, reorder", item.getName()),
-                        NotificationServiceHelper.createItemReorderEmailBody(vendor.getName(), item.getName(), item.getReorderQuantity()));
-            }
-
-            if (vendor.getPhone() != null) {
-                smsService.sendSMS(vendor.getPhone(),
-                        NotificationServiceHelper.createItemReorderSMSBody(item.getName(), item.getReorderQuantity()));
-            }
-
+            handleSendingNotificationForEmail(vendor, item);
             Date dateNow = Date.from(Instant.now());
             reorderTrackerMapper.insert(new ReorderTracker(item.getId(), BigInteger.ONE.intValue(), dateNow, vendor.getId(), ""));
             return new ReorderTrackerResponse(item.getId(), item.getName(), item.getVendorId(), ReorderStatus.REORDERED.name(), "", dateNow);
@@ -271,6 +272,30 @@ public class ItemServiceImpl implements ItemService {
             reorderTrackerMapper.insert(new ReorderTracker(item.getId(), BigInteger.ZERO.intValue() , dateNow, vendor.getId(), e.getMessage()));
             return new
                     ReorderTrackerResponse(item.getId(), item.getName(), item.getVendorId(), ReorderStatus.FAILED.name(), e.getMessage(), dateNow);
+        }
+    }
+
+    private void handleSendingNotificationForAlarm(final Vendor vendor, final Item item) {
+        if (vendor.getEmail() != null) {
+            emailService.sendEmail(vendor.getEmail(), String.format("Item: %s, alarm", item.getName()),
+                    NotificationServiceHelper.createItemAlarmEmailBody(vendor.getName(), item.getName()));
+        }
+
+        if (vendor.getPhone() != null) {
+            smsService.sendSMS(vendor.getPhone(),
+                    NotificationServiceHelper.createItemAlarmSMSBody(item.getName()));
+        }
+    }
+
+    private void handleSendingNotificationForEmail(final Vendor vendor, final Item item) {
+        if (vendor.getEmail() != null) {
+            emailService.sendEmail(vendor.getEmail(), String.format("Item: %s, reorder", item.getName()),
+                    NotificationServiceHelper.createItemReorderEmailBody(vendor.getName(), item.getName(), item.getReorderQuantity()));
+        }
+
+        if (vendor.getPhone() != null) {
+            smsService.sendSMS(vendor.getPhone(),
+                    NotificationServiceHelper.createItemReorderSMSBody(item.getName(), item.getReorderQuantity()));
         }
     }
 
@@ -302,5 +327,10 @@ public class ItemServiceImpl implements ItemService {
                                                                 final Date effectiveDate, final String reorderStatus) {
         return new ReorderTrackerResponse(reorderTracker.getItemId(), itemName, reorderTracker.getVendorId(),
                 reorderStatus, "", effectiveDate);
+    }
+
+    private Item mapItemQtyToItem(final ItemAndQty itemAndQty) {
+        return new Item(itemAndQty.getId(), itemAndQty.getName(), itemAndQty.getDetail(), itemAndQty.getPics(), itemAndQty.getAlarmThreshold(),
+                itemAndQty.getQuantityThreshold(), itemAndQty.getVendorId(), itemAndQty.getEffectiveDate(), itemAndQty.getReorderQuantity());
     }
 }
