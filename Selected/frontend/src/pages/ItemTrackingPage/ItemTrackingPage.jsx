@@ -54,7 +54,7 @@ function ItemTrackingPage() {
     )
       .then((resp) => resp.json())
       .then((resp) => {
-        const filterData = resp.filter(item => item.reorderStatus !== "Reordered")
+        const filterData = resp.filter(item => item.reorderStatus === "REORDERED")
         setLoading(false);
         setData(filterData);
       })
@@ -66,13 +66,15 @@ function ItemTrackingPage() {
   }, []);
 
   const handleUpdateButton = (itemId) => {
-    const itemData = data.filter(item => item.itemId === itemId)
-
-    const payload = {
-      ...itemData
-    };
+    const result = data.filter(item => item.itemId === itemId)[0]
     
-    fetch("http://localhost:8080/inventory/selected/api/items", {
+    const payload = {
+      itemId: result.itemId,
+      reorderStatus: result.reorderStatus,
+      effectiveDate: new Date(result.effectiveDate)
+    }
+
+    fetch(`http://localhost:8080/inventory/selected/api/fulfillItemReorder/${itemId}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -100,7 +102,6 @@ function ItemTrackingPage() {
       dataIndex: "reorderStatus",
       key: "reorderStatus",
       render: (reorderStatus) =>{
-        console.log(reorderStatus.toLowerCase().split(""))
         const wordSplitArray = reorderStatus.toLowerCase().split("")
         const firstLetter = wordSplitArray[0].toUpperCase();
         const restOfWord = wordSplitArray.slice(1, wordSplitArray.length)
